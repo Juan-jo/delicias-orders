@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: O000001
+      author: jdev
+      changes:
+        - sql:
+            sql: >-
+              create extension if not exists "uuid-ossp";
+              create extension if not exists postgis;
