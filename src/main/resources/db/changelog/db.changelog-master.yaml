@@ -7,3 +7,293 @@ databaseChangeLog:
             sql: >-
               create extension if not exists "uuid-ossp";
               create extension if not exists postgis;
+  - changeSet:
+      id: O000002
+      author: jdev
+      changes:
+        - createSequence:
+            cycle: false
+            dataType: INTEGER
+            startValue: 1
+            incrementBy: 1
+            minValue: 1
+            maxValue: 2147483647
+            schemaName: public
+            sequenceName: delivery_user_id_seq
+        - createTable:
+            tableName: delivery_users
+            columns:
+              - column:
+                  name: id
+                  type: INTEGER
+                  remarks: ID Unique, PK
+                  defaultValueComputed: nextval('delivery_user_id_seq')
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_delivery_user_id
+              - column:
+                  name: delivery_uuid
+                  type: UUID
+                  remarks: Deliverer Keycloak User ID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: zone_id
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+              - column:
+                  name: last_position
+                  type: GEOGRAPHY(Point)
+                  remarks: longitud, latitud address location
+  - changeSet:
+      id: O000003
+      author: jdev
+      changes:
+        - createSequence:
+            cycle: false
+            dataType: BIGINT
+            startValue: 1
+            incrementBy: 1
+            minValue: 1
+            maxValue: 9223372036854775807
+            schemaName: public
+            sequenceName: pos_order_id_seq
+        - createTable:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  remarks: ID Unique, PK
+                  defaultValueComputed: nextval('pos_order_id_seq')
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_order_id
+              - column:
+                  name: user_uuid
+                  type: UUID
+                  remarks: Keycloak user ID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: restaurant_tmpl_id
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: VARCHAR
+                  remarks: Customer notes
+              - column:
+                  name: adjustments
+                  type: JSONB
+                  remarks: "Lista de cargos y descuentos relacionados con la orden"
+                  defaultValue: '[]'
+              - column:
+                  name: total_amount_restaurant
+                  type: DECIMAL(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_amount
+                  type: DECIMAL(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - createIndex:
+            clustered: false
+            columns:
+              - column:
+                  descending: false
+                  name: created_date
+            indexName: pos_order__created_date_idx
+            schemaName: public
+            tableName: pos_order
+            unique: false
+
+  - changeSet:
+      id: O000004
+      author: jdev
+      changes:
+        - createSequence:
+            cycle: false
+            dataType: BIGINT
+            startValue: 1
+            incrementBy: 1
+            minValue: 1
+            maxValue: 9223372036854775807
+            schemaName: public
+            sequenceName: pos_order_line_id_seq
+        - createTable:
+            tableName: pos_order_line
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  remarks: ID Unique, PK
+                  defaultValueComputed: nextval('pos_order_line_id_seq')
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_order_line_id
+              - column:
+                  name: order_id
+                  type: BIGINT
+                  remarks: Order Ref
+              - column:
+                  name: product_tmpl_id
+                  type: INTEGER
+                  remarks: Product template
+              - column:
+                  name: qty
+                  type: smallint
+                  remarks: Quantity
+              - column:
+                  name: price_unit
+                  type: DECIMAL(10, 2)
+              - column:
+                  name: price_total
+                  type: DECIMAL(10, 2)
+              - column:
+                  name: attributes
+                  type: VARCHAR(120) ARRAY
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: Created on
+        - addForeignKeyConstraint:
+            baseColumnNames: order_id
+            baseTableName: pos_order_line
+            constraintName: pos_order_line_order_id_fkey
+            referencedColumnNames: id
+            referencedTableName: pos_order
+            onDelete: CASCADE
+            validate: true
+  - changeSet:
+      id: O000005
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: zone_id
+                  type: INTEGER
+  - changeSet:
+      id: O000006
+      author: jdev
+      changes:
+        - sql:
+            sql: >-
+              DROP TYPE IF EXISTS pos_order_status;
+              CREATE TYPE pos_order_status AS ENUM ('ORDERED', 'ACCEPTED', 'COOKING', 'READY_FOR_DELIVERY', 'DELIVERY_ASSIGNED_ORDER', 'DELIVERY_ROAD_TO_STORE', 'DELIVERY_ROAD_TO_DESTINATION', 'DELIVERED', 'CANCELLED', 'REJECTED', 'READY_FOR_PICKUP');
+              ALTER TABLE pos_order ALTER COLUMN status TYPE pos_order_status USING status::pos_order_status;
+        - createSequence:
+            cycle: false
+            dataType: BIGINT
+            startValue: 1
+            incrementBy: 1
+            minValue: 1
+            maxValue: 9223372036854775807
+            schemaName: public
+            sequenceName: pos_restaurant_kanban_id_seq
+        - createTable:
+            tableName: pos_restaurant_kanban
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  remarks: ID Unique, PK
+                  defaultValueComputed: nextval('pos_restaurant_kanban_id_seq')
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_restaurant_kanban_id
+              - column:
+                  name: order_id
+                  type: BIGINT
+              - column:
+                  name: restaurant_id
+                  type: INTEGER
+        - addForeignKeyConstraint:
+            baseColumnNames: order_id
+            baseTableName: pos_restaurant_kanban
+            constraintName: pos_restaurant_kanban_pos_order_fkey
+            referencedColumnNames: id
+            referencedTableName: pos_order
+            validate: true
+        - createIndex:
+            tableName: pos_restaurant_kanban
+            indexName: idx_pos_restaurant_kanban_restaurant_id
+            columns:
+              - column:
+                  name: restaurant_id
+            using: hash
+
+  - changeSet:
+      id: O000007
+      author: jdev
+      changes:
+        - createTable:
+            tableName: pos_restaurant_info
+            columns:
+              - column:
+                  name: id
+                  type: INTEGER
+                  remarks: ID Unique, PK
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_restaurant_id
+              - column:
+                  name: name
+                  type: VARCHAR
+              - column:
+                  name: address
+                  type: VARCHAR
+              - column:
+                  name: image_logo_url
+                  type: VARCHAR
+              - column:
+                  name: position
+                  type: GEOGRAPHY(Point)
+                  remarks: longitud, latitud address location
+  - changeSet:
+      id: O000008
+      author: jdev
+      changes:
+        - createTable:
+            tableName: pos_product_info
+            columns:
+              - column:
+                  name: id
+                  type: INTEGER
+                  remarks: ID Unique, PK
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_product_id
+              - column:
+                  name: name
+                  type: VARCHAR
+              - column:
+                  name: description
+                  type: VARCHAR
+              - column:
+                  name: picture_logo_url
+                  type: VARCHAR
