@@ -297,3 +297,50 @@ databaseChangeLog:
               - column:
                   name: picture_logo_url
                   type: VARCHAR
+  - changeSet:
+      id: O000009
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: user_address_id
+                  type: INTEGER
+              - column:
+                  name: delivery_location
+                  type: GEOGRAPHY(Point)
+              - column:
+                  name: shoppingcart_id
+                  type: UUID
+
+  - changeSet:
+      id: O000010
+      author: jdev
+      changes:
+        - createTable:
+            tableName: pos_user_addresss
+            columns:
+              - column:
+                  name: id
+                  type: INTEGER
+                  remarks: ID Unique, PK
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_user_address_id
+              - column:
+                  name: type_address
+                  type: VARCHAR
+              - column:
+                  name: details
+                  type: VARCHAR
+              - column:
+                  name: street
+                  type: VARCHAR
+              - column:
+                  name: address
+                  type: VARCHAR
+              - column:
+                  name: indications
+                  type: VARCHAR

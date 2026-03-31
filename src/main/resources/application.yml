@@ -62,8 +62,11 @@ quarkus:
       url: ${CLIENT_API_PRODUCTS_URL}
     restaurants-service:
       url: ${CLIENT_API_RESTAURANTS_URL}
+    shoppingcart-service:
+      url: ${CLIENT_API_SHOPPINGCART_URL}
 
 delicias:
+  defaultPicture: ${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/dl.png
   supabase:
     url: ${SUPABASE_URL}
     key: ${SUPABASE_KEY}
