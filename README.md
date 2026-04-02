@@ -4,6 +4,7 @@ This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
@@ -77,3 +78,58 @@ Create your first JPA entity
 Easily start your REST Web Services
 
 [Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+
+## Habilitar PostgreSQL con WAL
+
+En postgresql.conf
+
+```shell script
+sudo vim /etc/postgresql/16/main/postgresql.conf
+```
+```shell script
+wal_level = logical
+max_replication_slots = 10
+max_wal_senders = 10
+listen_addresses = '*'
+```
+
+
+En pg_hba.conf
+```shell script
+sudo vim /etc/postgresql/16/main/pg_hba.conf
+```
+```shell script
+host    all             all             0.0.0.0/0               md5
+host    all             all             0.0.0.0/0               scram-sha-256
+```
+
+## Crear Conector DEBEZIUM
+```shell script
+curl -X POST http://localhost:8083/connectors \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "outbox-connector",
+    "config": {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "database.hostname": "host.docker.internal",
+      "database.port": "5432",
+      "database.user": "postgres",
+      "database.password": "password",
+      "database.dbname": "delicias_orders",
+      "database.server.name": "dbserver1",
+      "topic.prefix": "dl",
+      "table.include.list": "public.outbox_event",
+      "plugin.name": "pgoutput",
+
+      "transforms": "outbox",
+      "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+
+      "transforms.outbox.table.field.event.key": "aggregate_id",
+      "transforms.outbox.table.field.event.payload": "payload",
+      "transforms.outbox.table.field.event.type": "type",
+
+      "transforms.outbox.route.by.field": "type",
+      "transforms.outbox.route.topic.replacement": "${routedByValue}"
+    }
+  }'
+```

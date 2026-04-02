@@ -1,14 +1,19 @@
 package org.delicias.order.application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import lombok.Builder;
 import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.repository.PosOrderRepository;
 import org.delicias.order.state.machine.OrderStateMachine;
+import org.delicias.outbox.domain.OutboxEvent;
+import org.delicias.outbox.domain.OutboxEventType;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,10 +40,6 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                         orderRepository.findById(orderId)
                 )
                 .flatMap(order -> stateMachine.handleAction(order, status))
-                .map(order -> {
-                    orderRepository.persist(order);
-                    return order;
-                })
                 .map(orderSaved -> {
 
                     handlePostTransition(orderSaved, additionalParams);
@@ -48,13 +49,36 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 .orElseThrow(() -> new NotFoundException("Order Not Found"));
     }
 
+    @Transactional
     @Override
     public void handlePostTransition(PosOrder order, Map<String, Object> additionalParams) {
 
         // TODO Add actions when change status
-        switch (order.getStatus()) {
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        StatusChanged changed = StatusChanged.builder()
+                .orderId(order.getId())
+                .status(order.getStatus())
+                .restaurantTmplId(order.getRestaurantTmplId())
+                .build();
+
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .aggregateId(order.getId())
+                .type(OutboxEventType.ORDER_STATUS_CHANGED)
+                .payload(mapper.valueToTree(changed))
+                .createdAt(LocalDateTime.now())
+                .build();
 
 
-        }
+        orderRepository.persist(order);
+        outboxEvent.persist();
     }
+
+    @Builder
+    private record StatusChanged(
+            Long orderId,
+            OrderStatus status,
+            Integer restaurantTmplId
+    ) {}
 }

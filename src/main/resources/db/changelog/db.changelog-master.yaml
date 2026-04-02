@@ -344,3 +344,32 @@ databaseChangeLog:
               - column:
                   name: indications
                   type: VARCHAR
+  - changeSet:
+      id: O000011
+      author: jdev
+      changes:
+        - createTable:
+            tableName: outbox_event
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  remarks: ID Unique, PK
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: outbox_event_id
+              - column:
+                  name: aggregate_id
+                  type: BIGINT
+              - column:
+                  name: type
+                  type: VARCHAR(100)
+              - column:
+                  name: payload
+                  type: JSONB
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: Created on
