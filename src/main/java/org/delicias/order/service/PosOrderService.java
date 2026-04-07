@@ -7,6 +7,8 @@ import jakarta.ws.rs.core.Response;
 import org.delicias.common.dto.order.CandidateOrderDTO;
 import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.common.dto.user.UserZoneDTO;
+import org.delicias.kanban.domain.model.Kanban;
+import org.delicias.kanban.domain.repository.KanbanRepository;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.model.PosOrderLine;
 import org.delicias.order.domain.repository.PosOrderRepository;
@@ -28,6 +30,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -59,6 +62,9 @@ public class PosOrderService {
     PosOrderRepository posOrderRepository;
 
     @Inject
+    KanbanRepository kanbanRepository;
+
+    @Inject
     SecurityContextService security;
 
     @Transactional
@@ -75,7 +81,8 @@ public class PosOrderService {
 
         restaurantService.createOrUpdate(restaurant);
         addressService.createOrUpdate(userAddress);
-        productService.addProducts(candidateOrder.lines());
+
+        Map<Integer, PosProduct> productsMap = productService.addProducts(candidateOrder.lines());
 
         PosOrder order = PosOrder.builder()
                 .userUUID(userUUID)
@@ -96,9 +103,7 @@ public class PosOrderService {
 
         candidateOrder.lines().forEach(it -> {
             PosOrderLine line = PosOrderLine.builder()
-                    .product(PosProduct.builder()
-                            .id(it.productId())
-                            .build())
+                    .product(productsMap.get(it.productId()))
                     .attributes(it.attributes())
                     .qty(it.qty())
                     .priceUnit(it.priceUnit())
@@ -110,6 +115,11 @@ public class PosOrderService {
         });
 
         posOrderRepository.persist(order);
+
+        kanbanRepository.persist(Kanban.builder()
+                        .order(order)
+                        .restaurantId(order.getRestaurantTmplId())
+                .build());
     }
 
 

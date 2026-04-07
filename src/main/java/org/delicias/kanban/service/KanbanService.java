@@ -10,7 +10,6 @@ import org.delicias.kanban.domain.repository.KanbanRepository;
 import org.delicias.kanban.dto.KanbanChangeStatusReqDTO;
 import org.delicias.kanban.dto.KanbanDTO;
 import org.delicias.kanban.dto.KanbanDetailDTO;
-import org.delicias.order.application.OrderStateFactory;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.service.OrderChangeStatusService;
 import org.delicias.products.domain.model.PosProduct;

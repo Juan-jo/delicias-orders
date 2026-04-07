@@ -373,3 +373,44 @@ databaseChangeLog:
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: CURRENT_TIMESTAMP
                   remarks: Created on
+
+  - changeSet:
+      id: O000012
+      author: jdev
+      changes:
+        - createTable:
+            tableName: delivery_user_order_rel
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValue: uuid_generate_v4()
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: delivery_user_order_rel_id
+              - column:
+                  name: delivery_user_id
+                  type: INTEGER
+              - column:
+                  name: order_id
+                  type: BIGINT
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: Created on
+
+  - changeSet:
+      id: O000013
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: delivery_user_order_rel_id
+                  type: UUID
