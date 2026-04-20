@@ -4,12 +4,16 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.delicias.common.adjusment.OrderAdjustment;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.restaurants.domain.model.PosRestaurant;
+import org.delicias.users.domain.model.PosUserAddress;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Point;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.*;
 
 @Entity
@@ -34,11 +38,15 @@ public class PosOrder {
     @Column(name = "user_uuid")
     private UUID userUUID;
 
-    @Column(name = "restaurant_tmpl_id")
-    private Integer restaurantTmplId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_tmpl_id")
+    @NotFound(action = NotFoundAction.IGNORE)
+    private PosRestaurant restaurant;
 
-    @Column(name = "user_address_id")
-    private Integer userAddressId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_address_id")
+    @NotFound(action = NotFoundAction.IGNORE)
+    private PosUserAddress userAddress;
 
     @Column(name = "shoppingcart_id")
     private UUID shoppingCartId;
@@ -66,12 +74,29 @@ public class PosOrder {
     @Column(name = "zone_id")
     private Integer zoneId;
 
-    @Column(name = "created_date")
-    private LocalDateTime createdDate;
-
     @OrderBy("id asc")
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PosOrderLine> lines = new HashSet<>();;
+    private Set<PosOrderLine> lines = new HashSet<>();
+
+    @Column(name = "delivery_assignment_attempts")
+    private Short deliveryAssignmentAttempts;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "ready_for_delivery_date")
+    private Instant readyForDeliveryDate;
+
+    @Column(name = "delivery_assigned_date")
+    private Instant deliveryAssignedDate;
+
+    @Column(name = "delivered_date")
+    private Instant deliveredDate;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_user_order_rel_id")
+    @NotFound(action = NotFoundAction.IGNORE)
+    private DeliveryUserPosOrderRel deliveryUserPosOrderRel;
 
     public void addLine(PosOrderLine line) {
 

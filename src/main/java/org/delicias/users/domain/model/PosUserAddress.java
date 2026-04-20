@@ -32,4 +32,8 @@ public class PosUserAddress {
 
     @Column(name = "indications")
     private String indications;
+
+    public PosUserAddress(Integer id) {
+        this.id = id;
+    }
 }

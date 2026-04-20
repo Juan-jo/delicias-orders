@@ -1,11 +1,10 @@
 package org.delicias.kanban.dto;
 
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 
@@ -29,8 +28,8 @@ public record KanbanDTO(
             String status,
             BigDecimal totalAmount,
             List<ProductItem> products,
-            @JsonFormat(pattern = "HH:mm")
-            LocalDateTime createdAt
+            Instant createdAt,
+            Instant readyForDeliveryDate
     ) {}
 
     @Builder

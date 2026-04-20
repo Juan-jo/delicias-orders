@@ -13,9 +13,11 @@ import org.delicias.order.state.machine.OrderStateMachine;
 import org.delicias.outbox.domain.OutboxEvent;
 import org.delicias.outbox.domain.OutboxEventType;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @ApplicationScoped
 public class OrderStateFactoryImpl implements OrderStateFactory {
@@ -60,7 +62,8 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
         StatusChanged changed = StatusChanged.builder()
                 .orderId(order.getId())
                 .status(order.getStatus())
-                .restaurantTmplId(order.getRestaurantTmplId())
+                .restaurantTmplId(order.getRestaurant().getId())
+                .userUUID(order.getUserUUID())
                 .build();
 
         OutboxEvent outboxEvent = OutboxEvent.builder()
@@ -71,6 +74,10 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 .build();
 
 
+        if(order.getStatus().equals(OrderStatus.READY_FOR_DELIVERY)) {
+            order.setReadyForDeliveryDate(Instant.now());
+        }
+
         orderRepository.persist(order);
         outboxEvent.persist();
     }
@@ -79,6 +86,7 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
     private record StatusChanged(
             Long orderId,
             OrderStatus status,
-            Integer restaurantTmplId
+            Integer restaurantTmplId,
+            UUID userUUID
     ) {}
 }

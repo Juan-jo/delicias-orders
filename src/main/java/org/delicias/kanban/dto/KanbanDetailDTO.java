@@ -1,11 +1,10 @@
 package org.delicias.kanban.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import org.delicias.common.dto.order.OrderStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Builder
@@ -20,9 +19,9 @@ public record KanbanDetailDTO(
             List<Line> lines,
             BigDecimal totalAmount,
             String paymentType,
-            @JsonFormat(pattern = "dd-MM HH:mm")
-            LocalDateTime createdAt,
-            OrderStatus status
+            Instant createdAt,
+            OrderStatus status,
+            Instant readyForDelivery
     ) { }
 
     @Builder

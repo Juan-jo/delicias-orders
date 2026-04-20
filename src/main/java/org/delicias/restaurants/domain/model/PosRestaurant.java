@@ -31,4 +31,7 @@ public class PosRestaurant {
     @Column(name = "position", columnDefinition = "GEOGRAPHY(Point, 4326)")
     private Point position;
 
+    public PosRestaurant(Integer id) {
+        this.id = id;
+    }
 }

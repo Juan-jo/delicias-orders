@@ -114,17 +114,6 @@ databaseChangeLog:
                   name: created_date
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: CURRENT_TIMESTAMP
-        - createIndex:
-            clustered: false
-            columns:
-              - column:
-                  descending: false
-                  name: created_date
-            indexName: pos_order__created_date_idx
-            schemaName: public
-            tableName: pos_order
-            unique: false
-
   - changeSet:
       id: O000004
       author: jdev
@@ -414,3 +403,71 @@ databaseChangeLog:
               - column:
                   name: delivery_user_order_rel_id
                   type: UUID
+
+  - changeSet:
+      id: O000014
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: delivery_assignment_attempts
+                  type: smallint
+                  defaultValueComputed: 0
+  - changeSet:
+      id: O000015
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: ready_for_delivery_date
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: delivery_assigned_date
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: delivered_date
+                  type: TIMESTAMP WITH TIME ZONE
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: created_at_utc
+                  type: TIMESTAMP WITH TIME ZONE
+        - sql:
+            sql: |
+              UPDATE pos_order
+              SET created_at_utc = created_date AT TIME ZONE 'America/Mexico_City';
+        - dropColumn:
+            tableName: pos_order
+            columnName: created_date
+        - renameColumn:
+            tableName: pos_order
+            oldColumnName: created_at_utc
+            newColumnName: created_at
+  - changeSet:
+      id: O000016
+      author: jdev
+      changes:
+        - sql:
+            sql: >-
+              CREATE INDEX idx_order_ready_fifo_attempts ON pos_order (ready_for_delivery_date ASC, delivery_assignment_attempts DESC) WHERE status = 'READY_FOR_DELIVERY';
+  - changeSet:
+      id: O000017
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: delivery_users
+            columns:
+              - column:
+                  name: name
+                  type: VARCHAR(50)
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+              - column:
+                  name: picture_url
+                  type: VARCHAR

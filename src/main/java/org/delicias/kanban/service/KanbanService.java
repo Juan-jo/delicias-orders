@@ -68,7 +68,8 @@ public class KanbanService {
                                     .orderId(k.getOrder().getId())
                                     .status(k.getOrder().getStatus().name())
                                     .totalAmount(k.getOrder().getTotalAmountRestaurant())
-                                    .createdAt(k.getOrder().getCreatedDate())
+                                    .createdAt(k.getOrder().getCreatedAt())
+                                    .readyForDeliveryDate(k.getOrder().getReadyForDeliveryDate())
                                     .products(k.getOrder().getLines().stream().map(line -> KanbanDTO.ProductItem.builder()
                                             .name(Optional.ofNullable(line.getProduct()).map(PosProduct::getName).orElse("Product Unknow"))
                                             .qty(line.getQty())
@@ -111,7 +112,8 @@ public class KanbanService {
                         .orderId(kanban.getId())
                         .status(order.getStatus())
                         .paymentType("CASH")
-                        .createdAt(order.getCreatedDate())
+                        .readyForDelivery(order.getReadyForDeliveryDate())
+                        .createdAt(order.getCreatedAt())
                         .totalAmount(order.getTotalAmountRestaurant())
                         .lines(order.getLines().stream().map(it -> {
 

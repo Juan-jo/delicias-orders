@@ -25,6 +25,8 @@ quarkus:
     database:
       generation: none
     second-level-caching-enabled: false
+    jdbc:
+      timezone: UTC
 
   oidc:
     auth-server-url: ${AUTH_SERVER_URL}/realms/${REALM}

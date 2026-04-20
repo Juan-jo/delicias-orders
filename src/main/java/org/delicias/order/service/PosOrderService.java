@@ -21,15 +21,17 @@ import org.delicias.rest.clients.RestaurantClient;
 import org.delicias.rest.clients.ShoppingCartClient;
 import org.delicias.rest.clients.UserClient;
 import org.delicias.rest.security.SecurityContextService;
+import org.delicias.restaurants.domain.model.PosRestaurant;
 import org.delicias.restaurants.dto.PosRestaurantDTO;
 import org.delicias.restaurants.service.PosRestaurantService;
+import org.delicias.users.domain.model.PosUserAddress;
 import org.delicias.users.dto.UserAddressDTO;
 import org.delicias.users.service.PosUserAddressService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -86,15 +88,17 @@ public class PosOrderService {
 
         PosOrder order = PosOrder.builder()
                 .userUUID(userUUID)
-                .restaurantTmplId(candidateOrder.restaurantTmplId())
+                .restaurant(new PosRestaurant(candidateOrder.restaurantTmplId()))
                 .status(OrderStatus.ORDERED)
                 .notes(reqDTO.notes())
                 .adjustments(candidateOrder.adjustments())
                 .totalAmountRestaurant(candidateOrder.subtotal())
                 .totalAmount(candidateOrder.total())
-                .createdDate(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .zoneId(userZoneDTO.zoneId())
-                .userAddressId(candidateOrder.deliveryAddressId())
+                .userAddress(
+                        new PosUserAddress(candidateOrder.deliveryAddressId())
+                )
                 .deliveryLocation(
                         geometryFactory.createPoint(new Coordinate(userAddress.longitude(), userAddress.latitude()))
                 )
@@ -118,7 +122,7 @@ public class PosOrderService {
 
         kanbanRepository.persist(Kanban.builder()
                         .order(order)
-                        .restaurantId(order.getRestaurantTmplId())
+                        .restaurantId(candidateOrder.restaurantTmplId())
                 .build());
     }
 
