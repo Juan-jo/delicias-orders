@@ -75,7 +75,7 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
 
 
         if(order.getStatus().equals(OrderStatus.READY_FOR_DELIVERY)) {
-            order.setReadyForDeliveryDate(Instant.now());
+            order.setReadyForDeliveryAt(Instant.now());
         }
 
         orderRepository.persist(order);

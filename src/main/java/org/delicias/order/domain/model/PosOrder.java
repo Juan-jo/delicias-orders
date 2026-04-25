@@ -81,17 +81,20 @@ public class PosOrder {
     @Column(name = "delivery_assignment_attempts")
     private Short deliveryAssignmentAttempts;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "ordered_at")
+    private Instant orderedAt;
 
-    @Column(name = "ready_for_delivery_date")
-    private Instant readyForDeliveryDate;
+    @Column(name = "ready_for_delivery_at")
+    private Instant readyForDeliveryAt;
 
     @Column(name = "delivery_assigned_date")
     private Instant deliveryAssignedDate;
 
-    @Column(name = "delivered_date")
-    private Instant deliveredDate;
+    @Column(name = "delivery_assigned_at")
+    private Instant deliveryAssignedAt;
+
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_user_order_rel_id")

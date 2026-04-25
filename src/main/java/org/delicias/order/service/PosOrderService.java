@@ -31,9 +31,13 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
+
+import static java.time.ZoneOffset.UTC;
 
 @ApplicationScoped
 public class PosOrderService {
@@ -69,6 +73,9 @@ public class PosOrderService {
     @Inject
     SecurityContextService security;
 
+    private static final String CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     @Transactional
     public void createOrder(CreateOrderReqDTO reqDTO) {
 
@@ -94,7 +101,7 @@ public class PosOrderService {
                 .adjustments(candidateOrder.adjustments())
                 .totalAmountRestaurant(candidateOrder.subtotal())
                 .totalAmount(candidateOrder.total())
-                .createdAt(Instant.now())
+                .orderedAt(Instant.now())
                 .zoneId(userZoneDTO.zoneId())
                 .userAddress(
                         new PosUserAddress(candidateOrder.deliveryAddressId())
@@ -190,6 +197,27 @@ public class PosOrderService {
         }
 
         return userZoneDTO;
+    }
+
+    private static String generateCode() {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < 6; i++) {
+            sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
+        }
+
+        String code = sb.substring(0, 3) + "-" + sb.substring(3, 6);
+
+        DateTimeFormatter FORMATTER =
+                DateTimeFormatter.ofPattern("yyyyMd").withZone(UTC);
+
+        String date = FORMATTER.format(Instant.now());
+
+        return String.format("%s %s", date, code);
+
+
+
     }
 
 }

@@ -67,6 +67,14 @@ quarkus:
     shoppingcart-service:
       url: ${CLIENT_API_SHOPPINGCART_URL}
 
+  keycloak:
+    admin-client:
+      server-url: ${AUTH_SERVER_URL}
+      realm: ${REALM}
+      client-id: ${ADMIN_CLIENT_ID} # Un cliente con roles de 'manage-users'
+      client-secret: ${ADMIN_CLIENT_SECRET}
+      grant-type: CLIENT_CREDENTIALS
+
 delicias:
   defaultPicture: ${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/dl.png
   supabase:

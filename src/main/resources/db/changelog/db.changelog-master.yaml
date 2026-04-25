@@ -471,3 +471,64 @@ databaseChangeLog:
               - column:
                   name: picture_url
                   type: VARCHAR
+  - changeSet:
+      id: O000018
+      author: jdev
+      changes:
+        - sql:
+            sql: >-
+              DROP INDEX idx_order_ready_fifo_attempts;
+        - renameColumn:
+            tableName: pos_order
+            oldColumnName: created_at
+            newColumnName: ordered_at
+        - renameColumn:
+            tableName: pos_order
+            oldColumnName: ready_for_delivery_date
+            newColumnName: ready_for_delivery_at
+        - renameColumn:
+            tableName: pos_order
+            oldColumnName: delivery_assigned_date
+            newColumnName: delivery_assigned_at
+        - renameColumn:
+            tableName: pos_order
+            oldColumnName: delivered_date
+            newColumnName: delivered_at
+        - sql:
+            sql: >-
+              CREATE INDEX idx_order_ready_fifo_attempts ON pos_order (ready_for_delivery_at ASC, delivery_assignment_attempts DESC) WHERE status = 'READY_FOR_DELIVERY';
+  - changeSet:
+      id: O000019
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: code
+                  type: VARCHAR(50)
+  - changeSet:
+      id: O000020
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: delivery_users
+            columns:
+              - column:
+                  name: username
+                  type: VARCHAR(50)
+              - column:
+                  name: email
+                  type: VARCHAR(75)
+        - addUniqueConstraint:
+            columnNames: username
+            constraintName: unique_username
+            schemaName: public
+            tableName: delivery_users
+            validate: true
+        - addUniqueConstraint:
+            columnNames: email
+            constraintName: unique_email
+            schemaName: public
+            tableName: delivery_users
+            validate: true
