@@ -532,3 +532,27 @@ databaseChangeLog:
             schemaName: public
             tableName: delivery_users
             validate: true
+  - changeSet:
+      id: O000021
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: delivery_user_order_rel
+            columns:
+              - column:
+                  name: route_geometry
+                  type: TEXT
+              - column:
+                  name: distance
+                  type: DOUBLE PRECISION
+              - column:
+                  name: duration
+                  type: DOUBLE PRECISION
+              - column:
+                  name: last_lat
+                  type: double precision
+                  remarks: DOUBLE PRECISION
+              - column:
+                  name: last_lng
+                  type: double precision
+                  remarks: DOUBLE PRECISION

@@ -1,6 +1,7 @@
 package org.delicias.delivery_users.resource;
 
 import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -8,11 +9,14 @@ import jakarta.validation.groups.ConvertGroup;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.delicias.common.roles.Roles;
 import org.delicias.common.validation.OnCreate;
 import org.delicias.common.validation.OnUpdate;
 import org.delicias.delivery_users.dto.ChangePasswordReqDTO;
 import org.delicias.delivery_users.dto.CreateDeliverUserReqDTO;
+import org.delicias.delivery_users.dto.OrderAssignedType;
 import org.delicias.delivery_users.dto.UpdateDeliveryUserReqDTO;
+import org.delicias.delivery_users.service.DeliveryAssignedOrdersService;
 import org.delicias.delivery_users.service.DeliveryUserService;
 
 @Path("/api/user-delivery")
@@ -25,6 +29,8 @@ public class DeliveryUserResource {
     @Inject
     DeliveryUserService deliveryUserService;
 
+    @Inject
+    DeliveryAssignedOrdersService assignedOrdersService;
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -100,5 +106,22 @@ public class DeliveryUserResource {
         );
 
         return Response.ok(filtered).build();
+    }
+
+    // TODO Mobile
+    @GET
+    @Path("/assigned")
+    @RolesAllowed({Roles.MOBILE_USER_DELIVERY})
+    public Response findById(
+            @QueryParam("type") @DefaultValue("ASSIGNED") OrderAssignedType reqType,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size
+    ) {
+
+        return Response.ok(
+                assignedOrdersService.loadAssignedOrHistory(
+                        page, size, reqType
+                )
+        ).build();
     }
 }

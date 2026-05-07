@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
-import org.delicias.common.roles.Role;
 import org.delicias.delivery_users.exception.EmailAlreadyExistsException;
 import org.delicias.delivery_users.exception.UserNameAlreadyExistsException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -33,7 +32,7 @@ public class UserKeycloakService {
             String username,
             String email,
             String password,
-            Role role,
+            String role,
             String name,
             String lastName
     ) {
@@ -95,10 +94,10 @@ public class UserKeycloakService {
     }
 
 
-    public void assignRealmRole(String userId, Role roleName) {
+    public void assignRealmRole(String userId, String roleName) {
         RealmResource realm = keycloak.realm(REALM);
 
-        RoleRepresentation role = realm.roles().get(roleName.name()).toRepresentation();
+        RoleRepresentation role = realm.roles().get(roleName).toRepresentation();
 
         realm.users()
                 .get(userId)

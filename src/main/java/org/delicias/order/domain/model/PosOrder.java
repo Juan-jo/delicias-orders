@@ -7,8 +7,6 @@ import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.restaurants.domain.model.PosRestaurant;
 import org.delicias.users.domain.model.PosUserAddress;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Point;
 
@@ -40,12 +38,10 @@ public class PosOrder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_tmpl_id")
-    @NotFound(action = NotFoundAction.IGNORE)
     private PosRestaurant restaurant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_address_id")
-    @NotFound(action = NotFoundAction.IGNORE)
     private PosUserAddress userAddress;
 
     @Column(name = "shoppingcart_id")
@@ -87,8 +83,6 @@ public class PosOrder {
     @Column(name = "ready_for_delivery_at")
     private Instant readyForDeliveryAt;
 
-    @Column(name = "delivery_assigned_date")
-    private Instant deliveryAssignedDate;
 
     @Column(name = "delivery_assigned_at")
     private Instant deliveryAssignedAt;
@@ -98,8 +92,7 @@ public class PosOrder {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_user_order_rel_id")
-    @NotFound(action = NotFoundAction.IGNORE)
-    private DeliveryUserPosOrderRel deliveryUserPosOrderRel;
+    private DeliveryUserPosOrderRel deliveryUserOrderRel;
 
     public void addLine(PosOrderLine line) {
 

@@ -7,7 +7,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import org.delicias.common.dto.PagedResult;
 import org.delicias.common.dto.delivery.DeliveryUserStatus;
-import org.delicias.common.roles.Role;
+import org.delicias.common.roles.Roles;
 import org.delicias.delivery_users.domain.model.DeliveryUserModel;
 import org.delicias.delivery_users.domain.repository.DeliveryUserRepository;
 import org.delicias.delivery_users.dto.*;
@@ -43,7 +43,7 @@ public class DeliveryUserService {
                 req.username,
                 req.email,
                 req.password,
-                Role.ROLE_MOBILE_USER_DELIVERY,
+                Roles.MOBILE_USER_DELIVERY,
                 req.name,
                 req.lastName
         );

@@ -111,7 +111,7 @@ public class UserOrdersService {
                                         .indications("")
                                         .build()
                         ))
-                .deliveryUser(Optional.ofNullable(it.getDeliveryUserPosOrderRel()).map(u -> UserOrderDTO.DeliveryUser
+                .deliveryUser(Optional.ofNullable(it.getDeliveryUserOrderRel()).map(u -> UserOrderDTO.DeliveryUser
                         .builder()
                                 .name(Optional.ofNullable(u.getDeliveryUser()).map(DeliveryUser::getName).orElse("Desconocido"))
                                 .lastName(Optional.ofNullable(u.getDeliveryUser()).map(DeliveryUser::getLastName).orElse("--"))
