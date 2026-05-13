@@ -556,3 +556,159 @@ databaseChangeLog:
                   name: last_lng
                   type: double precision
                   remarks: DOUBLE PRECISION
+
+  - changeSet:
+      id: O000022
+      author: jdev
+      changes:
+        - createTable:
+            tableName: pos_order_history
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_order_history_id
+              - column:
+                  name: zone_id
+                  type: INTEGER
+              - column:
+                  name: code
+                  type: VARCHAR(50)
+              - column:
+                  name: user_uuid
+                  type: UUID
+                  remarks: Keycloak user ID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: restaurant_tmpl_id
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: VARCHAR
+                  remarks: Customer notes
+              - column:
+                  name: adjustments
+                  type: JSONB
+                  remarks: "Lista de cargos y descuentos relacionados con la orden"
+                  defaultValue: '[]'
+              - column:
+                  name: total_amount_restaurant
+                  type: DECIMAL(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_amount
+                  type: DECIMAL(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_address_id
+                  type: INTEGER
+              - column:
+                  name: delivery_location
+                  type: GEOGRAPHY(Point)
+              - column:
+                  name: message_canceled
+                  type: VARCHAR(250)
+              - column:
+                  name: message_rejected
+                  type: VARCHAR(250)
+              - column:
+                  name: ordered_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: ready_for_delivery_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: delivery_assigned_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: delivered_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: canceled_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: rejected_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: delivery_user_order_rel_uuid
+                  type: UUID
+
+  - changeSet:
+      id: O000023
+      author: jdev
+      preConditions:
+        - foreignKeyConstraintExists:
+            foreignKeyName: pos_restaurant_kanban_pos_order_fkey
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: pos_restaurant_kanban
+            constraintName: pos_restaurant_kanban_pos_order_fkey
+
+        - addForeignKeyConstraint:
+            baseColumnNames: order_id
+            baseTableName: pos_restaurant_kanban
+            constraintName: pos_restaurant_kanban_pos_order_fkey
+            referencedColumnNames: id
+            referencedTableName: pos_order
+            onDelete: CASCADE
+            validate: true
+
+  - changeSet:
+      id: O000024
+      author: jdev
+      changes:
+        - createTable:
+            tableName: pos_order_line_history
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  remarks: ID Unique, PK
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_pos_order_line_history_id
+              - column:
+                  name: order_history_id
+                  type: BIGINT
+              - column:
+                  name: product_tmpl_id
+                  type: INTEGER
+              - column:
+                  name: qty
+                  type: smallint
+              - column:
+                  name: price_unit
+                  type: DECIMAL(10, 2)
+              - column:
+                  name: price_total
+                  type: DECIMAL(10, 2)
+              - column:
+                  name: attributes
+                  type: VARCHAR(120) ARRAY
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  remarks: Created on
+        - addForeignKeyConstraint:
+            baseColumnNames: order_history_id
+            baseTableName: pos_order_line_history
+            constraintName: pos_order_line_history_order_id_fkey
+            referencedColumnNames: id
+            referencedTableName: pos_order_history
+            onDelete: CASCADE
+            validate: true
