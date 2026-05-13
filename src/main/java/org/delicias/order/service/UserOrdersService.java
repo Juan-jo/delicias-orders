@@ -7,10 +7,7 @@ import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.order.domain.model.DeliveryUser;
 import org.delicias.order.domain.model.PosOrderLine;
 import org.delicias.order.domain.repository.PosOrderRepository;
-import org.delicias.order.dto.OrderedDTO;
-import org.delicias.order.dto.OrderedDetailDTO;
-import org.delicias.order.dto.UserOrderDTO;
-import org.delicias.order.dto.UserOrderReqType;
+import org.delicias.order.dto.*;
 import org.delicias.rest.security.SecurityContextService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -31,6 +28,9 @@ public class UserOrdersService {
 
     @Inject
     SecurityContextService security;
+
+    @Inject
+    OrderChangeStatusService orderChangeStatusService;
 
     private static final List<OrderStatus> statusInProgress = List.of(
             OrderStatus.ORDERED,
@@ -194,6 +194,17 @@ public class UserOrdersService {
                         .build())
                 .deliveryUser(deliveryUser)
                 .build();
+    }
+
+    public void cancelOrder(Long orderId, CancelOrderReqDTO reqDTO) {
+
+        var order = posOrderRepository.findById(orderId);
+
+        if(order == null) {
+            throw new NotFoundException("Order Not Found");
+        }
+
+        orderChangeStatusService.changeStatus(order, OrderStatus.CANCELLED, Map.of("message", reqDTO.message()));
     }
 
 }

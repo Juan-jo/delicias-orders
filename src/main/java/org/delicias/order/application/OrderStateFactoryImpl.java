@@ -9,6 +9,7 @@ import lombok.Builder;
 import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.repository.PosOrderRepository;
+import org.delicias.order.service.OrderMoveToHistoryService;
 import org.delicias.order.state.machine.OrderStateMachine;
 import org.delicias.outbox.domain.OutboxEvent;
 import org.delicias.outbox.domain.OutboxEventType;
@@ -27,6 +28,9 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
 
     @Inject
     private OrderStateMachine stateMachine;
+
+    @Inject
+    private OrderMoveToHistoryService orderMoveToHistoryService;
 
     @Override
     public void processAction(Long orderId, OrderStatus status) {
@@ -74,11 +78,28 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 .build();
 
 
-        if(order.getStatus().equals(OrderStatus.READY_FOR_DELIVERY)) {
+        if (order.getStatus().equals(OrderStatus.READY_FOR_DELIVERY)) {
             order.setReadyForDeliveryAt(Instant.now());
         }
 
         orderRepository.persist(order);
+
+        if (
+                order.getStatus().equals(OrderStatus.DELIVERED) ||
+                        order.getStatus().equals(OrderStatus.CANCELLED) ||
+                        order.getStatus().equals(OrderStatus.REJECTED)) {
+
+
+            Integer deliveryUserId = null;
+
+            if(order.getStatus().equals(OrderStatus.DELIVERED)) {
+                deliveryUserId = order.getDeliveryUserOrderRel().getDeliveryUser().getId();
+            }
+
+            String message = additionalParams.getOrDefault("message", "").toString();
+            orderMoveToHistoryService.moveToHistory(order.getId(), order.getStatus(), message, deliveryUserId);
+        }
+
         outboxEvent.persist();
     }
 

@@ -712,3 +712,24 @@ databaseChangeLog:
             referencedTableName: pos_order_history
             onDelete: CASCADE
             validate: true
+  - changeSet:
+      id: O000025
+      author: jdev
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: order_id
+            baseTableName: delivery_user_order_rel
+            constraintName: rel_pos_order_id_fkey
+            referencedColumnNames: id
+            referencedTableName: pos_order
+            onDelete: CASCADE
+            validate: true
+        - dropColumn:
+            tableName: pos_order_history
+            columnName: delivery_user_order_rel_uuid
+        - addColumn:
+            tableName: pos_order_history
+            columns:
+              - column:
+                  name: delivery_user_id
+                  type: int4

@@ -94,7 +94,7 @@ public class TrackingOrderService {
         }
         PosOrder order = rel.getOrder();
         orderChangeStatusService.changeStatus(order, OrderStatus.DELIVERED);
-        rel.setStatus(OrderTrackingStatus.DELIVERED);
+
 
         return Map.of("success", true);
     }

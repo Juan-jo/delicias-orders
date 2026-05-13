@@ -8,6 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.delicias.common.roles.Roles;
+import org.delicias.order.dto.CancelOrderReqDTO;
 import org.delicias.order.dto.CreateOrderReqDTO;
 import org.delicias.order.dto.UserOrderReqType;
 import org.delicias.order.service.PosOrderService;
@@ -67,6 +68,22 @@ public class OrderResource {
                 userOrdersService.getOrderedDetail(orderId)
         ).build();
     }
+
+    @PUT
+    @Path("/{orderId}/cancel")
+    @RolesAllowed({Roles.ROLE_MOBILE_USER})
+    public Response cancelOrder(
+            @PathParam("orderId") Long orderId,
+            @Valid CancelOrderReqDTO req
+    ) {
+        userOrdersService.cancelOrder(orderId, req);
+        return Response.ok().build();
+    }
+
+
+
+
+
 
 
     @GET
