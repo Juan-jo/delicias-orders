@@ -59,7 +59,7 @@ public class PosOrder {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "adjustments")
-    private List<OrderAdjustment> adjustments = new ArrayList<>();
+    private List<OrderAdjustment> adjustments;
 
     @Column(name = "total_amount_restaurant", precision = 10, scale = 2)
     private BigDecimal totalAmountRestaurant;
@@ -75,7 +75,7 @@ public class PosOrder {
 
     @OrderBy("id asc")
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<PosOrderLine> lines = new HashSet<>();
+    private Set<PosOrderLine> lines;
 
     @Column(name = "delivery_assignment_attempts")
     private Short deliveryAssignmentAttempts;
