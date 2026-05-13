@@ -14,7 +14,7 @@ public class PosUserAddressService {
     @Inject
     PosUserAddressRepository repository;
 
-    public void createOrUpdate(UserAddressDTO addressDTO) {
+    public PosUserAddress createOrUpdate(UserAddressDTO addressDTO) {
 
         PosUserAddress address = Optional.ofNullable(repository.findById(addressDTO.id()))
                 .map(it -> {
@@ -35,6 +35,8 @@ public class PosUserAddressService {
                         .build());
 
         repository.persist(address);
+
+        return address;
     }
 
 }

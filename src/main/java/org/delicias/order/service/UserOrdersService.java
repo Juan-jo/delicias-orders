@@ -2,14 +2,19 @@ package org.delicias.order.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.order.domain.model.DeliveryUser;
+import org.delicias.order.domain.model.PosOrderLine;
 import org.delicias.order.domain.repository.PosOrderRepository;
+import org.delicias.order.dto.OrderedDTO;
+import org.delicias.order.dto.OrderedDetailDTO;
 import org.delicias.order.dto.UserOrderDTO;
 import org.delicias.order.dto.UserOrderReqType;
 import org.delicias.rest.security.SecurityContextService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -121,10 +126,74 @@ public class UserOrdersService {
                 .build()).toList();
     }
 
-    private List<UserOrderDTO> ordersHistory() {
+    public List<OrderedDTO> getOrdered() {
 
-        return List.of();
+        return posOrderRepository.findInProgress(
+                        UUID.fromString(security.userId()),
+                        statusInProgress
+                ).stream().map(it -> OrderedDTO.builder()
+                        .orderId(it.getId())
+                        .code(it.getCode())
+                        .status(it.getStatus())
+                        .orderedAt(it.getOrderedAt())
+                        .restaurant(Optional.ofNullable(it.getRestaurant()).map(res -> OrderedDTO.Restaurant.builder()
+                                        .name(res.getName())
+                                        .pictureUrl(res.getImageLogoUrl())
+                                        .build())
+                                .orElse(
+                                        OrderedDTO.Restaurant.builder()
+                                                .name("Restaurant Unknow")
+                                                .pictureUrl(defaultPicture)
+                                                .build()
+                                ))
+
+                        .build())
+                .toList();
     }
 
+    public OrderedDetailDTO getOrderedDetail(Long orderId) {
+
+        var order = posOrderRepository.findById(orderId);
+
+        if (order == null) {
+            throw new NotFoundException("Order Not Found");
+        }
+
+        var deliveryUser = Optional.ofNullable(order.getDeliveryUserOrderRel()).map(rel ->
+                OrderedDetailDTO.DeliveryUser.builder()
+                        .name(rel.getDeliveryUser().getName())
+                        .lastName(rel.getDeliveryUser().getLastName())
+                        .pictureUrl(rel.getDeliveryUser().getPictureUrl())
+                        .build()
+        ).orElse(null);
+
+        BigDecimal subtotal = order.getLines().stream()
+                .map(PosOrderLine::getPriceTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return OrderedDetailDTO.builder()
+                .orderId(order.getId())
+                .code(order.getCode())
+                .status(order.getStatus())
+                .totalAmount(order.getTotalAmount())
+                .subtotalAmount(subtotal)
+                .adjustments(order.getAdjustments().stream().map(ad -> OrderedDetailDTO.Adjustment.builder()
+                        .name(ad.getName())
+                        .amount(BigDecimal.valueOf(ad.getAmount()))
+                        .build()).toList())
+                .lines(order.getLines().stream().map(line -> OrderedDetailDTO.Line.builder()
+                        .name(line.getProduct().getName())
+                        .pictureUrl(line.getProduct().getPictureUrl())
+                        .qty(line.getQty())
+                        .attributes(line.getAttributes())
+                        .total(line.getPriceTotal())
+                        .build()).toList())
+                .deliveryAddress(OrderedDetailDTO.DeliveryAddress.builder()
+                        .name(order.getUserAddress().getDetails())
+                        .address(List.of(order.getUserAddress().getAddress(), order.getUserAddress().getStreet()))
+                        .build())
+                .deliveryUser(deliveryUser)
+                .build();
+    }
 
 }

@@ -33,11 +33,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
-
-import static java.time.ZoneOffset.UTC;
 
 @ApplicationScoped
 public class PosOrderService {
@@ -73,7 +70,9 @@ public class PosOrderService {
     @Inject
     SecurityContextService security;
 
-    private static final String CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    private static final long CUSTOM_EPOCH = 1624665600000L; // Fecha de referencia: 26 de Jun de 2021 00:00:00 UTC
+    private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @Transactional
@@ -88,14 +87,14 @@ public class PosOrderService {
         UserAddressDTO userAddress = getUserAddress(candidateOrder.deliveryAddressId());
 
 
-        restaurantService.createOrUpdate(restaurant);
-        addressService.createOrUpdate(userAddress);
+        PosRestaurant posRestaurant = restaurantService.createOrUpdate(restaurant);
+        PosUserAddress posUserAddress = addressService.createOrUpdate(userAddress);
 
         Map<Integer, PosProduct> productsMap = productService.addProducts(candidateOrder.lines());
 
         PosOrder order = PosOrder.builder()
                 .userUUID(userUUID)
-                .restaurant(new PosRestaurant(candidateOrder.restaurantTmplId()))
+                .restaurant(posRestaurant)
                 .status(OrderStatus.ORDERED)
                 .notes(reqDTO.notes())
                 .adjustments(candidateOrder.adjustments())
@@ -103,9 +102,8 @@ public class PosOrderService {
                 .totalAmount(candidateOrder.total())
                 .orderedAt(Instant.now())
                 .zoneId(userZoneDTO.zoneId())
-                .userAddress(
-                        new PosUserAddress(candidateOrder.deliveryAddressId())
-                )
+                .code(generateCode())
+                .userAddress(posUserAddress)
                 .deliveryLocation(
                         geometryFactory.createPoint(new Coordinate(userAddress.longitude(), userAddress.latitude()))
                 )
@@ -125,6 +123,8 @@ public class PosOrderService {
 
         });
 
+        deleteShoppingCart(reqDTO.shoppingCartId());
+
         posOrderRepository.persist(order);
 
         kanbanRepository.persist(Kanban.builder()
@@ -133,6 +133,25 @@ public class PosOrderService {
                 .build());
     }
 
+    private void deleteShoppingCart(UUID shoppingCartId) {
+        try (Response response = shoppingCartClient.deleteShippingCart(shoppingCartId)) {
+
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+                throw new CandidateOrderBusinessException(
+                        "",
+                        CandidateOrderErrorCode.CAN_NOT_COMPLETE_SHOPPING_CART,
+                        Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+                );
+            }
+
+        } catch (Exception e) {
+            throw new CandidateOrderBusinessException(
+                    e.getMessage(),
+                    CandidateOrderErrorCode.CAN_NOT_COMPLETE_SHOPPING_CART,
+                    Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+            );
+        }
+    }
 
 
 
@@ -199,25 +218,31 @@ public class PosOrderService {
         return userZoneDTO;
     }
 
-    private static String generateCode() {
+    public String getTestCode() {
+        return generateCode();
+    }
 
-        StringBuilder sb = new StringBuilder();
+    public static String generateCode() {
+        long now = System.currentTimeMillis() - CUSTOM_EPOCH;
 
-        for (int i = 0; i < 6; i++) {
-            sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
+        String timePart = Long.toString(now, 36).toUpperCase();
+        if (timePart.length() > 3) {
+            timePart = timePart.substring(timePart.length() - 3);
+        } else {
+            timePart = String.format("%3s", timePart).replace(' ', '0');
         }
 
-        String code = sb.substring(0, 3) + "-" + sb.substring(3, 6);
+        String randomPart = generateRandomBase36();
 
-        DateTimeFormatter FORMATTER =
-                DateTimeFormatter.ofPattern("yyyyMd").withZone(UTC);
+        return timePart + "-" + randomPart;
+    }
 
-        String date = FORMATTER.format(Instant.now());
-
-        return String.format("%s %s", date, code);
-
-
-
+    private static String generateRandomBase36() {
+        StringBuilder sb = new StringBuilder(3);
+        for (int i = 0; i < 3; i++) {
+            sb.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
+        }
+        return sb.toString();
     }
 
 }

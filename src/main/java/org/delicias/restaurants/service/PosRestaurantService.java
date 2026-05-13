@@ -16,7 +16,7 @@ public class PosRestaurantService {
     @Inject
     PosRestaurantRepository repository;
 
-    public void createOrUpdate(PosRestaurantDTO dto) {
+    public PosRestaurant createOrUpdate(PosRestaurantDTO dto) {
 
         GeometryFactory geometryFactory = new GeometryFactory();
 
@@ -40,5 +40,7 @@ public class PosRestaurantService {
                         .build());
 
         repository.persist(restaurant);
+
+        return restaurant;
     }
 }

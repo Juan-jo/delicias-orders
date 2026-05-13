@@ -70,6 +70,9 @@ public class PosOrder {
     @Column(name = "zone_id")
     private Integer zoneId;
 
+    @Column(name = "code")
+    private String code;
+
     @OrderBy("id asc")
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PosOrderLine> lines = new HashSet<>();
