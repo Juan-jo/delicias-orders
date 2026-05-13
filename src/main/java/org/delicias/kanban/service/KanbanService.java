@@ -10,6 +10,7 @@ import org.delicias.kanban.domain.repository.KanbanRepository;
 import org.delicias.kanban.dto.KanbanChangeStatusReqDTO;
 import org.delicias.kanban.dto.KanbanDTO;
 import org.delicias.kanban.dto.KanbanDetailDTO;
+import org.delicias.kanban.dto.OrderRejectReqDTO;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.service.OrderChangeStatusService;
 import org.delicias.products.domain.model.PosProduct;
@@ -94,6 +95,18 @@ public class KanbanService {
         }
 
         orderChangeStatusService.changeStatus(kanban.getOrder(), req.status());
+    }
+
+    public void rejectOrder(Long kanbanId, OrderRejectReqDTO req) {
+        var kanban = kanbanRepository.findById(kanbanId);
+
+        if (kanban == null) {
+            throw new NotFoundException("Kanban Not Found");
+        }
+
+        PosOrder order = kanban.getOrder();
+
+        orderChangeStatusService.changeStatus(order, OrderStatus.REJECTED, Map.of("message", req.message()));
     }
 
     public KanbanDetailDTO getDetail(Long kanbanId) {
