@@ -1,6 +1,7 @@
 package org.delicias.kanban.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -22,6 +23,7 @@ public record KanbanDTO(
     ) {}
 
     @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record BoardItem(
             Long kanbanId,
             Long orderId,
@@ -30,7 +32,8 @@ public record KanbanDTO(
             BigDecimal totalAmount,
             List<ProductItem> products,
             Instant createdAt,
-            Instant readyForDeliveryDate
+            Instant readyForDeliveryDate,
+            Integer restaurantTmplId
     ) {}
 
     @Builder

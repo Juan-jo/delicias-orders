@@ -1,5 +1,6 @@
 package org.delicias.order.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -9,12 +10,15 @@ import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.common.dto.user.UserZoneDTO;
 import org.delicias.kanban.domain.model.Kanban;
 import org.delicias.kanban.domain.repository.KanbanRepository;
+import org.delicias.kanban.dto.KanbanDTO;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.model.PosOrderLine;
 import org.delicias.order.domain.repository.PosOrderRepository;
 import org.delicias.order.dto.CreateOrderReqDTO;
 import org.delicias.order.exception.CandidateOrderBusinessException;
 import org.delicias.order.exception.CandidateOrderErrorCode;
+import org.delicias.outbox.domain.OutboxEvent;
+import org.delicias.outbox.domain.OutboxEventType;
 import org.delicias.products.domain.model.PosProduct;
 import org.delicias.products.service.PosProductService;
 import org.delicias.rest.clients.RestaurantClient;
@@ -33,7 +37,9 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -70,10 +76,14 @@ public class PosOrderService {
     @Inject
     SecurityContextService security;
 
+    @Inject
+    ObjectMapper mapper;
 
     private static final long CUSTOM_EPOCH = 1624665600000L; // Fecha de referencia: 26 de Jun de 2021 00:00:00 UTC
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
+
+
 
     @Transactional
     public void createOrder(CreateOrderReqDTO reqDTO) {
@@ -127,10 +137,42 @@ public class PosOrderService {
 
         posOrderRepository.persist(order);
 
-        kanbanRepository.persist(Kanban.builder()
-                        .order(order)
-                        .restaurantId(candidateOrder.restaurantTmplId())
-                .build());
+        Kanban kanban = Kanban.builder()
+                .order(order)
+                .restaurantId(candidateOrder.restaurantTmplId())
+                .build();
+
+        kanbanRepository.persist(kanban);
+
+        sendOutboxEvent(kanban.getId(), candidateOrder.restaurantTmplId(), order);
+    }
+
+    private void sendOutboxEvent(Long kanbanId, Integer restaurantTmplId ,PosOrder order) {
+
+        KanbanDTO.BoardItem item = KanbanDTO.BoardItem.builder()
+                .restaurantTmplId(restaurantTmplId)
+                .kanbanId(kanbanId)
+                .orderId(order.getId())
+                .code(order.getCode())
+                .status(order.getStatus().name())
+                .totalAmount(order.getTotalAmountRestaurant())
+                .createdAt(order.getOrderedAt())
+                .readyForDeliveryDate(order.getReadyForDeliveryAt())
+                .products(order.getLines().stream().map(line -> KanbanDTO.ProductItem.builder()
+                        .name(Optional.ofNullable(line.getProduct()).map(PosProduct::getName).orElse("Product Unknow"))
+                        .qty(line.getQty())
+                        .attrValuesDesc(line.getAttributes())
+                        .build()).toList())
+                .build();
+
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .aggregateId(order.getId())
+                .type(OutboxEventType.CREATE_ORDER)
+                .payload(mapper.valueToTree(item))
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        outboxEvent.persist();
     }
 
     private void deleteShoppingCart(UUID shoppingCartId) {
