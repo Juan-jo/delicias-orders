@@ -18,6 +18,7 @@ import org.delicias.delivery_users.dto.OrderAssignedType;
 import org.delicias.delivery_users.dto.UpdateDeliveryUserReqDTO;
 import org.delicias.delivery_users.service.DeliveryAssignedOrdersService;
 import org.delicias.delivery_users.service.DeliveryUserService;
+import org.delicias.delivery_users.service.MobileDeliveryUserStatusService;
 
 @Path("/api/user-delivery")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -31,6 +32,9 @@ public class DeliveryUserResource {
 
     @Inject
     DeliveryAssignedOrdersService assignedOrdersService;
+
+    @Inject
+    MobileDeliveryUserStatusService statusService;
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -122,6 +126,28 @@ public class DeliveryUserResource {
                 assignedOrdersService.loadAssignedOrHistory(
                         page, size, reqType
                 )
+        ).build();
+    }
+
+    @GET
+    @Path("/status")
+    @RolesAllowed({Roles.MOBILE_USER_DELIVERY})
+    public Response loadStatus() {
+
+        return Response.ok(
+                statusService.loadStatus()
+        ).build();
+    }
+
+    @GET
+    @Path("/status/{value}")
+    @RolesAllowed({Roles.MOBILE_USER_DELIVERY})
+    public Response setStatus(
+            @NotNull @PathParam("value") Boolean available
+    ) {
+
+        return Response.ok(
+                statusService.setStatus(available)
         ).build();
     }
 }

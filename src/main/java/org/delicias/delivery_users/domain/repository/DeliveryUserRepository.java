@@ -8,6 +8,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.delicias.delivery_users.domain.model.DeliveryUserModel;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @ApplicationScoped
 public class DeliveryUserRepository implements PanacheRepositoryBase<DeliveryUserModel, Integer> {
@@ -48,4 +50,7 @@ public class DeliveryUserRepository implements PanacheRepositoryBase<DeliveryUse
         );
     }
 
+    public Optional<DeliveryUserModel> findByUUID(UUID uuid) {
+        return find("deliveryUUID", uuid).firstResultOptional();
+    }
 }
