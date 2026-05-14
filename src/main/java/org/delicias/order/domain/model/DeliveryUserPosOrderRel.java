@@ -24,7 +24,6 @@ public class DeliveryUserPosOrderRel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_user_id", referencedColumnName = "id")
-    @NotFound(action = NotFoundAction.IGNORE)
     private DeliveryUser deliveryUser;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -14,6 +14,7 @@ import org.locationtech.jts.geom.Point;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -87,5 +88,13 @@ public class PosOrderHistory  extends PanacheEntityBase {
 
     @Column(name = "rejected_at")
     private Instant rejectedAt;
+
+    @OrderBy("id asc")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<PosOrderLineHistory> lines;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_user_id", referencedColumnName = "id")
+    private DeliveryUser deliveryUser;
 
 }

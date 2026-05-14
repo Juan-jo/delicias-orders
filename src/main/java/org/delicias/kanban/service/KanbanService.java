@@ -14,6 +14,8 @@ import org.delicias.kanban.dto.OrderRejectReqDTO;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.service.OrderChangeStatusService;
 import org.delicias.products.domain.model.PosProduct;
+import org.delicias.restaurants.domain.model.PosRestaurant;
+import org.delicias.restaurants.domain.repository.PosRestaurantRepository;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
@@ -32,9 +34,16 @@ public class KanbanService {
     KanbanRepository kanbanRepository;
 
     @Inject
+    PosRestaurantRepository restaurantRepository;
+
+    @Inject
     OrderChangeStatusService orderChangeStatusService;
 
     public KanbanDTO loadKanban(Integer restaurantTmplId) {
+
+        PosRestaurant restaurant = restaurantRepository.findByIdOptional(restaurantTmplId)
+                .orElseThrow(() -> new NotFoundException("Restaurant Not Found"));
+
 
         List<OrderStatus> orderStatus = List.of(
                 OrderStatus.ORDERED,
@@ -57,7 +66,7 @@ public class KanbanService {
 
         KanbanDTO.KanbanDTOBuilder response = KanbanDTO.builder()
                 .id(restaurantTmplId)
-                .label("")
+                .label(restaurant.getName())
                 .children(orderStatus.stream().map(it -> {
 
                     var orders = grouped.getOrDefault(it, List.of());
@@ -67,6 +76,7 @@ public class KanbanService {
                             .children(orders.stream().map(k -> KanbanDTO.BoardItem.builder()
                                     .kanbanId(k.getId())
                                     .orderId(k.getOrder().getId())
+                                    .code(k.getOrder().getCode())
                                     .status(k.getOrder().getStatus().name())
                                     .totalAmount(k.getOrder().getTotalAmountRestaurant())
                                     .createdAt(k.getOrder().getOrderedAt())

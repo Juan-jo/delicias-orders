@@ -25,6 +25,7 @@ public record KanbanDTO(
     public record BoardItem(
             Long kanbanId,
             Long orderId,
+            String code,
             String status,
             BigDecimal totalAmount,
             List<ProductItem> products,

@@ -74,7 +74,7 @@ public class PosOrder {
     private String code;
 
     @OrderBy("id asc")
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<PosOrderLine> lines;
 
     @Column(name = "delivery_assignment_attempts")

@@ -1,31 +1,22 @@
 package org.delicias.order.domain.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.delicias.products.domain.model.PosProduct;
-import org.hibernate.annotations.NotFoundAction;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
-@Table(name = "pos_order_line")
+@Table(name = "pos_order_line_history")
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PosOrderLine {
+public class PosOrderLineHistory {
 
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "pos_order_line_id_seq")
-    @SequenceGenerator(
-            name = "pos_order_line_id_seq",
-            allocationSize = 1
-    )
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,8 +24,8 @@ public class PosOrderLine {
     private PosProduct product;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", referencedColumnName = "id")
-    private PosOrder order;
+    @JoinColumn(name = "order_history_id", referencedColumnName = "id")
+    private PosOrderHistory order;
 
     @Column(columnDefinition = "varchar[]", name = "attributes")
     private List<String> attributes;

@@ -60,7 +60,7 @@ public class OrderResource {
 
     @GET
     @Path("/ordered/{orderId}/detail")
-    @RolesAllowed({Roles.MOBILE_USER_DELIVERY, Roles.ROLE_MOBILE_USER})
+    @RolesAllowed({Roles.MOBILE_USER_DELIVERY, Roles.ROLE_MOBILE_USER, Roles.ROLE_ROOT})
     public Response getOrderedDetail(
             @PathParam("orderId") Long orderId
     ) {
@@ -79,10 +79,6 @@ public class OrderResource {
         userOrdersService.cancelOrder(orderId, req);
         return Response.ok().build();
     }
-
-
-
-
 
 
 
