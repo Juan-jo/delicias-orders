@@ -82,7 +82,7 @@ public class PosOrderService {
     private static final long CUSTOM_EPOCH = 1624665600000L; // Fecha de referencia: 26 de Jun de 2021 00:00:00 UTC
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
-
+    private static final short ZERO_SHORT = 0;
 
 
     @Transactional
@@ -114,6 +114,7 @@ public class PosOrderService {
                 .zoneId(userZoneDTO.zoneId())
                 .code(generateCode())
                 .userAddress(posUserAddress)
+                .assignmentAttempts(ZERO_SHORT)
                 .deliveryLocation(
                         geometryFactory.createPoint(new Coordinate(userAddress.longitude(), userAddress.latitude()))
                 )

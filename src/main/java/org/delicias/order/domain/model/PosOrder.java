@@ -78,7 +78,7 @@ public class PosOrder {
     private Set<PosOrderLine> lines;
 
     @Column(name = "delivery_assignment_attempts")
-    private Short deliveryAssignmentAttempts;
+    private Short assignmentAttempts;
 
     @Column(name = "ordered_at")
     private Instant orderedAt;
