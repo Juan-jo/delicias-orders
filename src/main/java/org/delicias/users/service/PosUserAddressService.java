@@ -23,6 +23,8 @@ public class PosUserAddressService {
                     it.setStreet(addressDTO.street());
                     it.setAddress(addressDTO.address());
                     it.setIndications(addressDTO.indications());
+                    it.setFullName(addressDTO.fullName());
+                    it.setPictureUrl(addressDTO.pictureUrl());
                     return it;
                 })
                 .orElse(PosUserAddress.builder()
@@ -32,6 +34,8 @@ public class PosUserAddressService {
                         .street(addressDTO.street())
                         .address(addressDTO.address())
                         .indications(addressDTO.indications())
+                        .fullName(addressDTO.fullName())
+                        .pictureUrl(addressDTO.pictureUrl())
                         .build());
 
         repository.persist(address);

@@ -231,7 +231,7 @@ public class PosOrderService {
     private UserAddressDTO getUserAddress(Integer addressId) {
 
         try (Response response = userClient.getByFields(
-                addressId, "id,type_address,details,street,latitude,longitude,address,indications,zone_id")
+                addressId, "id,type_address,details,street,latitude,longitude,address,indications,zone_id,picture_url,full_name")
         ) {
 
             return response.readEntity(UserAddressDTO.class);

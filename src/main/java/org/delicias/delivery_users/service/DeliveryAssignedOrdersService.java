@@ -11,6 +11,7 @@ import org.delicias.rest.security.SecurityContextService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -64,8 +65,10 @@ public class DeliveryAssignedOrdersService {
                                         .pictureUrl(it.getOrder().getRestaurant().getImageLogoUrl())
                                         .build();
                                 default -> OrderAssignedItemDTO.Destination.builder()
-                                        .name("María J. Martinez")
-                                        .pictureUrl(defaultPicture) // TODO add picture User
+                                        .name(Optional.ofNullable(it.getOrder().getUserAddress().getFullName()).orElse("--"))
+                                        .pictureUrl(Optional.ofNullable(it.getOrder().getUserAddress().getPictureUrl())
+                                                .orElse(defaultPicture)
+                                        )
                                         .address(
                                                 String.format("%s. %s", it.getOrder().getUserAddress().getAddress(), it.getOrder().getUserAddress().getStreet())
                                         )
@@ -77,6 +80,7 @@ public class DeliveryAssignedOrdersService {
                                     .status(it.getStatus())
                                     .order(OrderAssignedItemDTO.Order.builder()
                                             .orderId(it.getOrder().getId())
+                                            .code(it.getOrder().getCode())
                                             .deliveryAssignedAt(it.getOrder().getDeliveryAssignedAt())
                                             .status(it.getOrder().getStatus())
                                             .destination(destination)

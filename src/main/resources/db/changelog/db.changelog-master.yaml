@@ -733,3 +733,17 @@ databaseChangeLog:
               - column:
                   name: delivery_user_id
                   type: int4
+
+  - changeSet:
+      id: O000026
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_user_addresss
+            columns:
+              - column:
+                  name: picture_url
+                  type: VARCHAR
+              - column:
+                  name: full_name
+                  type: VARCHAR(150)

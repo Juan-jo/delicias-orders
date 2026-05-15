@@ -15,6 +15,7 @@ import org.delicias.order.dto.TrackingEtaDTO;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -137,8 +138,10 @@ public class TrackingOrderService {
                     .longitude(order.getRestaurant().getPosition().getX())
                     .build();
             case DELIVERY_ROAD_TO_DESTINATION -> TrackingDTO.Destination.builder()
-                    .name("María J. Martinez")
-                    .pictureUrl(defaultPicture) // TODO add picture User
+                    .name(Optional.ofNullable(rel.getOrder().getUserAddress().getFullName()).orElse("--"))
+                    .pictureUrl(Optional.ofNullable(rel.getOrder().getUserAddress().getPictureUrl())
+                            .orElse(defaultPicture)
+                    )
                     .street(order.getUserAddress().getStreet())
                     .address(
                             String.format("%s. %s", order.getUserAddress().getAddress(), order.getUserAddress().getStreet())
@@ -157,7 +160,7 @@ public class TrackingOrderService {
                 .order(TrackingDTO.Order.builder()
                         .orderId(order.getId())
                         .status(order.getStatus())
-                        .code("MX-20172") // TODO Add codes
+                        .code(order.getCode())
                         .destination(destination)
                         .build())
                 .build();

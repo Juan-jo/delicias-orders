@@ -33,6 +33,12 @@ public class PosUserAddress {
     @Column(name = "indications")
     private String indications;
 
+    @Column(name = "picture_url")
+    private String pictureUrl;
+
+    @Column(name = "full_name")
+    private String fullName;
+
     public PosUserAddress(Integer id) {
         this.id = id;
     }

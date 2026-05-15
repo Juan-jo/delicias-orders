@@ -11,5 +11,10 @@ public record UserAddressDTO(
         double latitude,
         double longitude,
         String address,
-        String indications
+        String indications,
+
+        @JsonProperty("picture_url")
+        String pictureUrl,
+        @JsonProperty("full_name")
+        String fullName
 ) { }
