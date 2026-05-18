@@ -23,5 +23,6 @@ public class UpdateDeliveryUserReqDTO {
     @NotNull(message = "The parameter is mandatory", groups = { OnUpdate.class})
     public String email;
 
+    @RestForm("picture")
     public FileUpload picture;
 }

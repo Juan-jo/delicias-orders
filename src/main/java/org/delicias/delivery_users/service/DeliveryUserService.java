@@ -12,10 +12,9 @@ import org.delicias.delivery_users.domain.model.DeliveryUserModel;
 import org.delicias.delivery_users.domain.repository.DeliveryUserRepository;
 import org.delicias.delivery_users.dto.*;
 import org.delicias.keycloak.UserKeycloakService;
-import org.delicias.supabase.SupabaseStorageService;
+import org.delicias.minio.MinioStorageService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +30,7 @@ public class DeliveryUserService {
     DeliveryUserRepository deliveryUserRepository;
 
     @Inject
-    SupabaseStorageService storageService;
+    MinioStorageService storageService;
 
     @Inject
     UserKeycloakService userKeycloakService;
@@ -48,13 +47,7 @@ public class DeliveryUserService {
                 req.lastName
         );
 
-        String pictureUrl = Optional.ofNullable(req.picture).map(fileUpload -> {
-            try {
-                return storageService.uploadFile(fileUpload);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).orElse(defaultPicture);
+        String pictureUrl = Optional.ofNullable(req.picture).map(fileUpload -> storageService.upload(fileUpload)).orElse(defaultPicture);
 
         DeliveryUserModel newUserDeliver = DeliveryUserModel.builder()
                 .deliveryUUID(UUID.fromString(userUUID))
@@ -84,7 +77,9 @@ public class DeliveryUserService {
                 .lastName(deliveryUser.getLastName())
                 .username(deliveryUser.getUsername())
                 .email(deliveryUser.getEmail())
-                .pictureUrl(Optional.ofNullable(deliveryUser.getPictureURL()).orElse(defaultPicture))
+                .pictureUrl(
+                        storageService.thumbnailUrl(Optional.ofNullable(deliveryUser.getPictureURL()).orElse(defaultPicture))
+                )
                 .build();
     }
 
@@ -105,13 +100,7 @@ public class DeliveryUserService {
                 true
         );
 
-        String pictureUrl = Optional.ofNullable(req.picture).map(fileUpload -> {
-            try {
-                return storageService.uploadFile(fileUpload);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).orElse(null);
+        String pictureUrl = Optional.ofNullable(req.picture).map(fileUpload -> storageService.upload(fileUpload)).orElse(null);
 
         deliveryUser.setName(req.name);
         deliveryUser.setLastName(req.lastName);
@@ -150,9 +139,6 @@ public class DeliveryUserService {
         deliveryUserRepository.delete(deliveryUser);
         userKeycloakService.deleteUser(String.valueOf(deliveryUserUUID));
 
-        if(currentPictureURL != null && !currentPictureURL.equals(defaultPicture)) {
-            storageService.deleteFile(currentPictureURL);
-        }
 
     }
 
@@ -178,7 +164,9 @@ public class DeliveryUserService {
                         .status(it.getStatus())
                         .username(Optional.ofNullable(it.getUsername()).orElse(""))
                         .email(Optional.ofNullable(it.getEmail()).orElse(""))
-                        .pictureUrl(Optional.ofNullable(it.getPictureURL()).orElse(defaultPicture))
+                        .pictureUrl(
+                                storageService.thumbnailUrl(Optional.ofNullable(it.getPictureURL()).orElse(defaultPicture))
+                        )
                         .build())
                 .toList();
 
