@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.minio.MinioStorageService;
 import org.delicias.order.domain.model.*;
 import org.delicias.order.domain.repository.PosOrderRepository;
 import org.delicias.order.dto.*;
@@ -30,6 +31,9 @@ public class UserOrdersService {
 
     @Inject
     OrderChangeStatusService orderChangeStatusService;
+
+    @Inject
+    MinioStorageService minioStorageService;
 
     private static final List<OrderStatus> statusInProgress = List.of(
             OrderStatus.ORDERED,
@@ -137,12 +141,12 @@ public class UserOrdersService {
                         .orderedAt(it.getOrderedAt())
                         .restaurant(Optional.ofNullable(it.getRestaurant()).map(res -> OrderedDTO.Restaurant.builder()
                                         .name(res.getName())
-                                        .pictureUrl(res.getImageLogoUrl())
+                                        .pictureUrl(minioStorageService.smallImage(res.getImageLogoUrl()))
                                         .build())
                                 .orElse(
                                         OrderedDTO.Restaurant.builder()
                                                 .name("Restaurant Unknow")
-                                                .pictureUrl(defaultPicture)
+                                                .pictureUrl(minioStorageService.smallImage(defaultPicture))
                                                 .build()
                                 ))
 
