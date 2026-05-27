@@ -626,7 +626,7 @@ databaseChangeLog:
                   type: VARCHAR(250)
               - column:
                   name: ordered_at
-                  type: TIMESTAMP WITHOUT TIME ZONE
+                  type: TIMESTAMP WITH TIME ZONE
               - column:
                   name: ready_for_delivery_at
                   type: TIMESTAMP WITH TIME ZONE
@@ -701,7 +701,7 @@ databaseChangeLog:
                   type: VARCHAR(120) ARRAY
               - column:
                   name: created_at
-                  type: TIMESTAMP WITHOUT TIME ZONE
+                  type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: CURRENT_TIMESTAMP
                   remarks: Created on
         - addForeignKeyConstraint:

@@ -46,89 +46,6 @@ public class UserOrdersService {
             OrderStatus.READY_FOR_PICKUP
     );
 
-    public Map<String, Object> loadOrders(UserOrderReqType reqType) {
-
-        long countInProgress = posOrderRepository.countInProgress(
-                UUID.fromString(security.userId()),
-                statusInProgress
-        );
-
-
-        if(reqType.equals(UserOrderReqType.IN_PROGRESS)) {
-            return Map.of(
-                    "status", reqType,
-                    "data", ordersInProgress(),
-                    "totalInProgress", countInProgress
-            );
-        }
-
-        return Map.of(
-                "status", reqType,
-                "data", List.of(),
-                "totalInProgress", countInProgress
-        );
-
-    }
-
-    private List<UserOrderDTO> ordersInProgress() {
-
-        return posOrderRepository.findInProgress(
-                UUID.fromString(security.userId()),
-                statusInProgress
-        ).stream().map(it -> UserOrderDTO.builder()
-                .orderId(it.getId())
-                .status(it.getStatus())
-                .lines(it.getLines().stream().map(li -> {
-
-                    UserOrderDTO.Line.LineBuilder r = UserOrderDTO.Line.builder()
-                            .qty(li.getQty())
-                            .attributes(li.getAttributes());
-
-                    Optional.ofNullable(li.getProduct()).ifPresentOrElse(p -> {
-                        r.name(p.getName());
-                        r.pictureUrl(p.getPictureUrl());
-                    }, () -> {
-                        r.name("Product Unknow");
-                        r.pictureUrl(defaultPicture);
-                    });
-
-                    return r.build();
-
-                }).toList())
-                .restaurant(Optional.ofNullable(it.getRestaurant()).map(res -> UserOrderDTO.Restaurant.builder()
-                                .name(res.getName())
-                                .pictureUrl(res.getImageLogoUrl())
-                                .build())
-                        .orElse(
-                                UserOrderDTO.Restaurant.builder()
-                                        .name("Restaurant Unknow")
-                                        .pictureUrl(defaultPicture)
-                                        .build()
-                        ))
-                .deliveryAddress(Optional.ofNullable(it.getUserAddress()).map(ua -> UserOrderDTO.DeliveryAddress.builder()
-                                .address(ua.getAddress())
-                                .details(ua.getDetails())
-                                .street(ua.getStreet())
-                                .indications(ua.getIndications())
-                                .build())
-                        .orElse(
-                                UserOrderDTO.DeliveryAddress.builder()
-                                        .address("")
-                                        .details("")
-                                        .street("")
-                                        .indications("")
-                                        .build()
-                        ))
-                .deliveryUser(Optional.ofNullable(it.getDeliveryUserOrderRel()).map(u -> UserOrderDTO.DeliveryUser
-                        .builder()
-                                .name(Optional.ofNullable(u.getDeliveryUser()).map(DeliveryUser::getName).orElse("Desconocido"))
-                                .lastName(Optional.ofNullable(u.getDeliveryUser()).map(DeliveryUser::getLastName).orElse("--"))
-                                .pictureUrl(Optional.ofNullable(u.getDeliveryUser()).map(DeliveryUser::getPictureUrl).orElse(defaultPicture))
-                                .build())
-                        .orElse(null))
-                .build()).toList();
-    }
-
     public List<OrderedDTO> getOrdered() {
 
         return posOrderRepository.findInProgress(
@@ -200,6 +117,7 @@ public class UserOrdersService {
                         .total(line.getPriceTotal())
                         .build()).toList())
                 .deliveryAddress(OrderedDetailDTO.DeliveryAddress.builder()
+                        .addressType(order.getUserAddress().getTypeAddress())
                         .name(order.getUserAddress().getDetails())
                         .address(List.of(order.getUserAddress().getAddress(), order.getUserAddress().getStreet()))
                         .build())
@@ -220,6 +138,13 @@ public class UserOrdersService {
                 .map(PosOrderLineHistory::getPriceTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        String rejectOrCancelMessage = switch (order.getStatus()) {
+            case REJECTED -> order.getMessageRejected();
+            case CANCELLED -> order.getMessageCanceled();
+            default -> null;
+        };
+
+
         return OrderedDetailDTO.builder()
                 .orderId(order.getId())
                 .code(order.getCode())
@@ -239,9 +164,11 @@ public class UserOrdersService {
                         .build()).toList())
                 .deliveryAddress(OrderedDetailDTO.DeliveryAddress.builder()
                         .name(order.getUserAddress().getDetails())
+                        .addressType(order.getUserAddress().getTypeAddress())
                         .address(List.of(order.getUserAddress().getAddress(), order.getUserAddress().getStreet()))
                         .build())
                 .deliveryUser(deliveryUser)
+                .rejectOrCancelMessage(rejectOrCancelMessage)
                 .build();
     }
 

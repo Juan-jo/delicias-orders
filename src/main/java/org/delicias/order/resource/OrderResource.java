@@ -11,18 +11,13 @@ import org.delicias.common.roles.Roles;
 import org.delicias.order.dto.CancelOrderReqDTO;
 import org.delicias.order.dto.CreateOrderReqDTO;
 import org.delicias.order.dto.UserOrderReqType;
+import org.delicias.order.service.OrdersHistoryService;
 import org.delicias.order.service.PosOrderService;
 import org.delicias.order.service.TrackingOrderService;
 import org.delicias.order.service.UserOrdersService;
 
-import java.security.SecureRandom;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
-
-import static java.time.ZoneOffset.UTC;
 
 @Authenticated
 @Path("/api/orders")
@@ -38,6 +33,9 @@ public class OrderResource {
 
     @Inject
     TrackingOrderService trackingOrderService;
+
+    @Inject
+    OrdersHistoryService historyService;
 
     @POST
     @RolesAllowed({Roles.ROLE_MOBILE_USER})
@@ -84,12 +82,12 @@ public class OrderResource {
 
     @GET
     @RolesAllowed({Roles.ROLE_MOBILE_USER})
-    @Path("/user")
+    @Path("/history")
     public Response userOrders(
-            @QueryParam("type") @DefaultValue("IN_PROGRESS") UserOrderReqType reqType
+            @QueryParam("page") @DefaultValue("0") int page
     ) {
         return Response.ok(
-                userOrdersService.loadOrders(reqType)
+                historyService.loadHistory(page)
         ).build();
     }
 

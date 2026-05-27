@@ -1,6 +1,8 @@
 package org.delicias.order.domain.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Page;
 import jakarta.persistence.*;
 import lombok.*;
 import org.delicias.common.adjusment.OrderAdjustment;
@@ -96,5 +98,10 @@ public class PosOrderHistory  extends PanacheEntityBase {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_user_id", referencedColumnName = "id")
     private DeliveryUser deliveryUser;
+
+    public static PanacheQuery<PosOrderHistory> findByUserUUID(UUID userUUID, int pageIndex) {
+        return find("userUUID = ?1 order by orderedAt desc", userUUID)
+                .page(Page.of(pageIndex, 10));
+    }
 
 }

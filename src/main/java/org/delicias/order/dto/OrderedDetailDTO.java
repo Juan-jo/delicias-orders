@@ -18,7 +18,8 @@ public record OrderedDetailDTO(
         List<Line> lines,
         DeliveryAddress deliveryAddress,
         DeliveryUser deliveryUser,
-        List<Adjustment> adjustments
+        List<Adjustment> adjustments,
+        String rejectOrCancelMessage
 ) {
 
     @Builder
@@ -32,6 +33,7 @@ public record OrderedDetailDTO(
 
     @Builder
     public record DeliveryAddress(
+            String addressType,
             String name,
             List<String> address
     ){}
