@@ -13,6 +13,8 @@ import org.delicias.delivery_users.domain.repository.DeliveryUserRepository;
 import org.delicias.delivery_users.dto.*;
 import org.delicias.keycloak.UserKeycloakService;
 import org.delicias.minio.MinioStorageService;
+import org.delicias.minio.utils.MinioRS;
+import org.delicias.minio.utils.MinioSize;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
@@ -78,7 +80,8 @@ public class DeliveryUserService {
                 .username(deliveryUser.getUsername())
                 .email(deliveryUser.getEmail())
                 .pictureUrl(
-                        storageService.thumbnailUrl(Optional.ofNullable(deliveryUser.getPictureURL()).orElse(defaultPicture))
+                        storageService.pictureUrl(Optional.ofNullable(deliveryUser.getPictureURL()).orElse(defaultPicture),
+                                MinioSize.MEDIUM, MinioRS.FIT, (short) 70)
                 )
                 .build();
     }
@@ -165,7 +168,9 @@ public class DeliveryUserService {
                         .username(Optional.ofNullable(it.getUsername()).orElse(""))
                         .email(Optional.ofNullable(it.getEmail()).orElse(""))
                         .pictureUrl(
-                                storageService.thumbnailUrl(Optional.ofNullable(it.getPictureURL()).orElse(defaultPicture))
+                                storageService.pictureUrl(
+                                        Optional.ofNullable(it.getPictureURL()).orElse(defaultPicture),
+                                        MinioSize.MEDIUM, MinioRS.FIT, (short) 70)
                         )
                         .build())
                 .toList();

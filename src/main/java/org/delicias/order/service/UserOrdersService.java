@@ -5,6 +5,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.minio.MinioStorageService;
+import org.delicias.minio.utils.MinioRS;
+import org.delicias.minio.utils.MinioSize;
 import org.delicias.order.domain.model.*;
 import org.delicias.order.domain.repository.PosOrderRepository;
 import org.delicias.order.dto.*;
@@ -58,12 +60,12 @@ public class UserOrdersService {
                         .orderedAt(it.getOrderedAt())
                         .restaurant(Optional.ofNullable(it.getRestaurant()).map(res -> OrderedDTO.Restaurant.builder()
                                         .name(res.getName())
-                                        .pictureUrl(minioStorageService.smallImage(res.getImageLogoUrl()))
+                                        .pictureUrl(minioStorageService.pictureUrl(res.getImageLogoUrl(), MinioSize.SMALL, MinioRS.FIT, (short) 70))
                                         .build())
                                 .orElse(
                                         OrderedDTO.Restaurant.builder()
                                                 .name("Restaurant Unknow")
-                                                .pictureUrl(minioStorageService.smallImage(defaultPicture))
+                                                .pictureUrl(minioStorageService.pictureUrl(defaultPicture, MinioSize.SMALL, MinioRS.FIT, (short) 70))
                                                 .build()
                                 ))
 

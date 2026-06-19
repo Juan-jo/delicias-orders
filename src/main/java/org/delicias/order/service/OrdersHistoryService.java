@@ -3,6 +3,8 @@ package org.delicias.order.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.delicias.minio.MinioStorageService;
+import org.delicias.minio.utils.MinioRS;
+import org.delicias.minio.utils.MinioSize;
 import org.delicias.order.domain.model.PosOrderHistory;
 import org.delicias.order.dto.OrderHistoryItemDTO;
 import org.delicias.rest.security.SecurityContextService;
@@ -33,8 +35,10 @@ public class OrdersHistoryService {
                         .status(it.getStatus())
                         .orderedAt(it.getOrderedAt())
                         .restaurantName(it.getRestaurant().getName())
-                        .restaurantPictureUrl(minioStorageService.fitThumbnailUrl(
-                                Optional.ofNullable(it.getRestaurant().getImageLogoUrl()).orElse(defaultPicture))
+                        .restaurantPictureUrl(minioStorageService.pictureUrl(
+                                Optional.ofNullable(it.getRestaurant().getImageLogoUrl()).orElse(defaultPicture),
+                                        MinioSize.MEDIUM, MinioRS.FIT, (short) 70
+                                )
                         )
                         .build())
                 .toList();
