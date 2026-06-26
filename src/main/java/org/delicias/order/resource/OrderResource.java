@@ -1,5 +1,6 @@
 package org.delicias.order.resource;
 
+import com.stripe.exception.StripeException;
 import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -10,9 +11,8 @@ import jakarta.ws.rs.core.Response;
 import org.delicias.common.roles.Roles;
 import org.delicias.order.dto.CancelOrderReqDTO;
 import org.delicias.order.dto.CreateOrderReqDTO;
-import org.delicias.order.dto.UserOrderReqType;
 import org.delicias.order.service.OrdersHistoryService;
-import org.delicias.order.service.PosOrderService;
+import org.delicias.order.service.CreatePosOrderService;
 import org.delicias.order.service.TrackingOrderService;
 import org.delicias.order.service.UserOrdersService;
 
@@ -26,7 +26,7 @@ import java.util.UUID;
 public class OrderResource {
 
     @Inject
-    PosOrderService orderService;
+    CreatePosOrderService orderService;
 
     @Inject
     UserOrdersService userOrdersService;
@@ -41,10 +41,12 @@ public class OrderResource {
     @RolesAllowed({Roles.ROLE_MOBILE_USER})
     public Response create(
             @Valid CreateOrderReqDTO reqDTO
-    ) {
+    ) throws StripeException {
 
-        orderService.createOrder(reqDTO);
-        return Response.status(Response.Status.CREATED).build();
+        return Response.status(Response.Status.CREATED)
+                .entity(
+                        orderService.create(reqDTO)
+                ).build();
     }
 
     @GET

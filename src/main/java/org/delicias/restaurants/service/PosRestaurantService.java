@@ -24,6 +24,7 @@ public class PosRestaurantService {
         PosRestaurant restaurant = Optional.ofNullable(repository.findById(dto.id()))
                 .map(r -> {
 
+                    r.setStoreType(dto.storeType());
                     r.setName(dto.name());
                     r.setAddress(dto.address());
                     r.setImageLogoUrl(dto.photo());
@@ -34,6 +35,7 @@ public class PosRestaurantService {
                 .orElse(PosRestaurant.builder()
                         .id(dto.id())
                         .name(dto.name())
+                        .storeType(dto.storeType())
                         .address(dto.address())
                         .imageLogoUrl(dto.photo())
                         .position(geometryFactory.createPoint(new Coordinate(dto.longitude(), dto.latitude())))

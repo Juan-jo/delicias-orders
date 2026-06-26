@@ -7,12 +7,18 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import lombok.Builder;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.kanban.domain.model.Kanban;
+import org.delicias.kanban.domain.repository.KanbanRepository;
+import org.delicias.kanban.dto.KanbanDTO;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.repository.PosOrderRepository;
+import org.delicias.order.payment.PaymentMethod;
+import org.delicias.order.payment.PaymentStatus;
 import org.delicias.order.service.OrderMoveToHistoryService;
 import org.delicias.order.state.machine.OrderStateMachine;
 import org.delicias.outbox.domain.OutboxEvent;
 import org.delicias.outbox.domain.OutboxEventType;
+import org.delicias.products.domain.model.PosProduct;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -32,6 +38,13 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
     @Inject
     private OrderMoveToHistoryService orderMoveToHistoryService;
 
+    @Inject
+    KanbanRepository kanbanRepository;
+
+    @Inject
+    ObjectMapper mapper;
+
+    @Transactional
     @Override
     public void processAction(Long orderId, OrderStatus status) {
 
@@ -55,12 +68,91 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 .orElseThrow(() -> new NotFoundException("Order Not Found"));
     }
 
-    @Transactional
     @Override
     public void handlePostTransition(PosOrder order, Map<String, Object> additionalParams) {
 
-        // TODO Add actions when change status
+        switch (order.getStatus()) {
+            case ORDERED -> handleOrdered(order);
+            case PENDING_PAYMENT -> handlePendingPayment(order);
+            case ACCEPTED, COOKING, READY_FOR_DELIVERY, DELIVERY_ASSIGNED_ORDER,
+                 DELIVERY_ROAD_TO_STORE, DELIVERY_ROAD_TO_DESTINATION, READY_FOR_PICKUP -> {
 
+                if (order.getStatus().equals(OrderStatus.READY_FOR_DELIVERY)) {
+                    order.setReadyForDeliveryAt(Instant.now());
+                }
+
+                sendStatusChangedOutboxEvent(order);
+                //orderRepository.persist(order);
+            }
+            case DELIVERED, CANCELLED, REJECTED -> {
+                Integer deliveryUserId = null;
+
+                if(order.getStatus().equals(OrderStatus.DELIVERED)) {
+                    deliveryUserId = order.getDeliveryUserOrderRel().getDeliveryUser().getId();
+                }
+                sendStatusChangedOutboxEvent(order);
+
+                // Get reason for cancel or reject
+                String message = additionalParams.getOrDefault("message", "").toString();
+                orderMoveToHistoryService.moveToHistory(order.getId(), order.getStatus(), message, deliveryUserId);
+
+            }
+        }
+    }
+
+
+    private void handleOrdered(PosOrder order) {
+
+        Integer restaurantTmplId = order.getRestaurant().getId();
+
+        Kanban kanban = Kanban.builder()
+                .order(order)
+                .restaurantId(restaurantTmplId)
+                .build();
+
+        kanbanRepository.persist(kanban);
+
+        if(order.getPaymentMethod().equals(PaymentMethod.CARD)) {
+            order.setPaymentStatus(PaymentStatus.SUCCEEDED);
+        }
+
+        sendOrderedOutboxEvent(order, kanban.getId(), restaurantTmplId);
+    }
+
+    private void handlePendingPayment(PosOrder order) {
+
+    }
+
+    private void sendOrderedOutboxEvent(PosOrder order, Long kanbanId, Integer restaurantTmplId) {
+
+        KanbanDTO.BoardItem item = KanbanDTO.BoardItem.builder()
+                .restaurantTmplId(restaurantTmplId)
+                .kanbanId(kanbanId)
+                .orderId(order.getId())
+                .code(order.getCode())
+                .status(order.getStatus().name())
+                .totalAmount(order.getTotalAmountRestaurant())
+                .createdAt(order.getOrderedAt())
+                .readyForDeliveryDate(order.getReadyForDeliveryAt())
+                .products(order.getLines().stream().map(line -> KanbanDTO.ProductItem.builder()
+                        .name(Optional.ofNullable(line.getProduct()).map(PosProduct::getName).orElse("Product Unknow"))
+                        .qty(line.getQty())
+                        .attrValuesDesc(line.getAttributes())
+                        .build()).toList())
+                .build();
+
+        OutboxEvent outboxEvent = OutboxEvent.builder()
+                .aggregateId(order.getId())
+                .type(OutboxEventType.CREATE_ORDER)
+                .payload(mapper.valueToTree(item))
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        outboxEvent.persist();
+    }
+
+
+    private void sendStatusChangedOutboxEvent(PosOrder order) {
         ObjectMapper mapper = new ObjectMapper();
 
         StatusChanged changed = StatusChanged.builder()
@@ -76,29 +168,6 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 .payload(mapper.valueToTree(changed))
                 .createdAt(LocalDateTime.now())
                 .build();
-
-
-        if (order.getStatus().equals(OrderStatus.READY_FOR_DELIVERY)) {
-            order.setReadyForDeliveryAt(Instant.now());
-        }
-
-        orderRepository.persist(order);
-
-        if (
-                order.getStatus().equals(OrderStatus.DELIVERED) ||
-                        order.getStatus().equals(OrderStatus.CANCELLED) ||
-                        order.getStatus().equals(OrderStatus.REJECTED)) {
-
-
-            Integer deliveryUserId = null;
-
-            if(order.getStatus().equals(OrderStatus.DELIVERED)) {
-                deliveryUserId = order.getDeliveryUserOrderRel().getDeliveryUser().getId();
-            }
-
-            String message = additionalParams.getOrDefault("message", "").toString();
-            orderMoveToHistoryService.moveToHistory(order.getId(), order.getStatus(), message, deliveryUserId);
-        }
 
         outboxEvent.persist();
     }

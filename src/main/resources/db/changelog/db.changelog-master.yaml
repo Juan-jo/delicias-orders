@@ -747,3 +747,120 @@ databaseChangeLog:
               - column:
                   name: full_name
                   type: VARCHAR(150)
+
+  - changeSet:
+      id: O000027
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_order
+            columns:
+              - column:
+                  name: payment_method
+                  type: VARCHAR(30)
+                  defaultValue: 'CASH'
+              - column:
+                  name: payment_status
+                  type: VARCHAR(30)
+                  defaultValue: 'PENDING'
+
+  - changeSet:
+      id: O000028
+      author: jdev
+      changes:
+        - createSequence:
+            cycle: false
+            dataType: BIGINT
+            startValue: 1
+            incrementBy: 1
+            minValue: 1
+            maxValue: 9223372036854775807
+            schemaName: public
+            sequenceName: pos_payment_transaction_id_seq
+        - createTable:
+            tableName: payment_transaction
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  remarks: ID Unique, PK
+                  defaultValueComputed: nextval('pos_payment_transaction_id_seq')
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_payment_transaction
+              - column:
+                  name: order_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: provider
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_id
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failure_reason
+                  type: TEXT
+              - column:
+                  name: paid_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: O000029
+      author: jdev
+      changes:
+        - sql:
+            sql: >-
+              ALTER TYPE pos_order_status
+              ADD VALUE IF NOT EXISTS 'PENDING_PAYMENT'
+              BEFORE 'ORDERED';
+  - changeSet:
+      id: O000030
+      author: jdev
+      changes:
+        - sql:
+            sql: >-
+              ALTER TYPE pos_order_status
+              ADD VALUE IF NOT EXISTS 'CREATED'
+              BEFORE 'PENDING_PAYMENT';
+  - changeSet:
+      id: O000031
+      author: jdev
+      changes:
+        - addColumn:
+            tableName: pos_restaurant_info
+            columns:
+              - column:
+                  name: store_type
+                  type: VARCHAR(50)
+                  defaultValue: 'RESTAURANT'

@@ -3,6 +3,8 @@ package org.delicias.order.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.order.payment.PaymentMethod;
+import org.delicias.order.payment.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,7 +21,9 @@ public record OrderedDetailDTO(
         DeliveryAddress deliveryAddress,
         DeliveryUser deliveryUser,
         List<Adjustment> adjustments,
-        String rejectOrCancelMessage
+        String rejectOrCancelMessage,
+        PaymentMethod paymentMethod,
+        PaymentStatus paymentStatus
 ) {
 
     @Builder

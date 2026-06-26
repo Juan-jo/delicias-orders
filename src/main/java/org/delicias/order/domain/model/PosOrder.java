@@ -1,9 +1,12 @@
 package org.delicias.order.domain.model;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
 import org.delicias.common.adjusment.OrderAdjustment;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.order.payment.PaymentMethod;
+import org.delicias.order.payment.PaymentStatus;
 import org.delicias.restaurants.domain.model.PosRestaurant;
 import org.delicias.users.domain.model.PosUserAddress;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -21,7 +24,7 @@ import java.util.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PosOrder {
+public class PosOrder extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(
@@ -96,6 +99,14 @@ public class PosOrder {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_user_order_rel_id")
     private DeliveryUserPosOrderRel deliveryUserOrderRel;
+
+    @Column(name = "payment_method")
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
+
+    @Column(name = "payment_status")
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
 
     public void addLine(PosOrderLine line) {
 

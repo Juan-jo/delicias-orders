@@ -1,6 +1,6 @@
 package org.delicias.order.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stripe.exception.StripeException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -8,17 +8,17 @@ import jakarta.ws.rs.core.Response;
 import org.delicias.common.dto.order.CandidateOrderDTO;
 import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.common.dto.user.UserZoneDTO;
-import org.delicias.kanban.domain.model.Kanban;
-import org.delicias.kanban.domain.repository.KanbanRepository;
-import org.delicias.kanban.dto.KanbanDTO;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.model.PosOrderLine;
 import org.delicias.order.domain.repository.PosOrderRepository;
 import org.delicias.order.dto.CreateOrderReqDTO;
+import org.delicias.order.dto.CreateOrderResponseDTO;
 import org.delicias.order.exception.CandidateOrderBusinessException;
 import org.delicias.order.exception.CandidateOrderErrorCode;
-import org.delicias.outbox.domain.OutboxEvent;
-import org.delicias.outbox.domain.OutboxEventType;
+import org.delicias.order.payment.PaymentMethod;
+import org.delicias.order.payment.PaymentStrategy;
+import org.delicias.order.payment.PaymentStrategyFactory;
+import org.delicias.order.payment.dto.PaymentResultDTO;
 import org.delicias.products.domain.model.PosProduct;
 import org.delicias.products.service.PosProductService;
 import org.delicias.rest.clients.RestaurantClient;
@@ -37,13 +37,11 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
-public class PosOrderService {
+public class CreatePosOrderService {
 
 
     @Inject
@@ -71,13 +69,10 @@ public class PosOrderService {
     PosOrderRepository posOrderRepository;
 
     @Inject
-    KanbanRepository kanbanRepository;
-
-    @Inject
     SecurityContextService security;
 
     @Inject
-    ObjectMapper mapper;
+    PaymentStrategyFactory paymentStrategyFactory;
 
     private static final long CUSTOM_EPOCH = 1624665600000L; // Fecha de referencia: 26 de Jun de 2021 00:00:00 UTC
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -86,13 +81,13 @@ public class PosOrderService {
 
 
     @Transactional
-    public void createOrder(CreateOrderReqDTO reqDTO) {
+    public CreateOrderResponseDTO create(CreateOrderReqDTO req) throws StripeException {
 
         GeometryFactory geometryFactory = new GeometryFactory();
         UUID userUUID = UUID.fromString(security.userId());
 
         UserZoneDTO userZoneDTO = getUserZone(userUUID);
-        CandidateOrderDTO candidateOrder = getCandidateOrder(reqDTO.shoppingCartId());
+        CandidateOrderDTO candidateOrder = getCandidateOrder(req.shoppingCartId());
         PosRestaurantDTO restaurant = getRestaurant(candidateOrder.restaurantTmplId());
         UserAddressDTO userAddress = getUserAddress(candidateOrder.deliveryAddressId());
 
@@ -105,8 +100,8 @@ public class PosOrderService {
         PosOrder order = PosOrder.builder()
                 .userUUID(userUUID)
                 .restaurant(posRestaurant)
-                .status(OrderStatus.ORDERED)
-                .notes(reqDTO.notes())
+                .status(OrderStatus.CREATED)
+                .notes(req.notes())
                 .adjustments(candidateOrder.adjustments())
                 .totalAmountRestaurant(candidateOrder.subtotal())
                 .totalAmount(candidateOrder.total())
@@ -118,7 +113,7 @@ public class PosOrderService {
                 .deliveryLocation(
                         geometryFactory.createPoint(new Coordinate(userAddress.longitude(), userAddress.latitude()))
                 )
-                .shoppingCartId(reqDTO.shoppingCartId())
+                .shoppingCartId(req.shoppingCartId())
                 .build();
 
         candidateOrder.lines().forEach(it -> {
@@ -134,47 +129,26 @@ public class PosOrderService {
 
         });
 
-        deleteShoppingCart(reqDTO.shoppingCartId());
-
         posOrderRepository.persist(order);
 
-        Kanban kanban = Kanban.builder()
-                .order(order)
-                .restaurantId(candidateOrder.restaurantTmplId())
-                .build();
+        PaymentStrategy strategy = paymentStrategyFactory.getStrategy(req.paymentMethod());
+        PaymentResultDTO paymentResult = strategy.processPayment(order);
 
-        kanbanRepository.persist(kanban);
 
-        sendOutboxEvent(kanban.getId(), candidateOrder.restaurantTmplId(), order);
+
+        /*
+        if(paymentResult.method().equals(PaymentMethod.CASH)) {
+            deleteShoppingCart(req.shoppingCartId());
+        }
+        */
+
+        return new CreateOrderResponseDTO(
+                paymentResult.method(),
+                paymentResult.clientSecret()
+        );
     }
 
-    private void sendOutboxEvent(Long kanbanId, Integer restaurantTmplId ,PosOrder order) {
 
-        KanbanDTO.BoardItem item = KanbanDTO.BoardItem.builder()
-                .restaurantTmplId(restaurantTmplId)
-                .kanbanId(kanbanId)
-                .orderId(order.getId())
-                .code(order.getCode())
-                .status(order.getStatus().name())
-                .totalAmount(order.getTotalAmountRestaurant())
-                .createdAt(order.getOrderedAt())
-                .readyForDeliveryDate(order.getReadyForDeliveryAt())
-                .products(order.getLines().stream().map(line -> KanbanDTO.ProductItem.builder()
-                        .name(Optional.ofNullable(line.getProduct()).map(PosProduct::getName).orElse("Product Unknow"))
-                        .qty(line.getQty())
-                        .attrValuesDesc(line.getAttributes())
-                        .build()).toList())
-                .build();
-
-        OutboxEvent outboxEvent = OutboxEvent.builder()
-                .aggregateId(order.getId())
-                .type(OutboxEventType.CREATE_ORDER)
-                .payload(mapper.valueToTree(item))
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        outboxEvent.persist();
-    }
 
     private void deleteShoppingCart(UUID shoppingCartId) {
         try (Response response = shoppingCartClient.deleteShippingCart(shoppingCartId)) {
@@ -214,7 +188,7 @@ public class PosOrderService {
 
     private PosRestaurantDTO getRestaurant(Integer restaurantTmplId) {
         try (Response response = restaurantClient.getByFields(
-                restaurantTmplId, "id,name,photo,cover,latitude,longitude,address")
+                restaurantTmplId, "id,name,photo,cover,latitude,longitude,address,store_type")
         ) {
 
             return response.readEntity(PosRestaurantDTO.class);

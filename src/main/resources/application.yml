@@ -84,3 +84,9 @@ delicias:
     bucket: ${MINIO_BUCKET}
   imgproxy:
     url: ${IMGPROXY_URL}
+
+stripe:
+  secret:
+    key: ${STRIPE_SECRET_KEY}
+  webhook:
+    secret: ${WEBHOOK_STRIPE_SECRET}

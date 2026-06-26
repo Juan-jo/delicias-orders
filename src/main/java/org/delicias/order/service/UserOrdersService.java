@@ -4,12 +4,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.common.dto.restaurant.StoreType;
 import org.delicias.minio.MinioStorageService;
 import org.delicias.minio.utils.MinioRS;
 import org.delicias.minio.utils.MinioSize;
 import org.delicias.order.domain.model.*;
 import org.delicias.order.domain.repository.PosOrderRepository;
 import org.delicias.order.dto.*;
+import org.delicias.order.payment.PaymentMethod;
+import org.delicias.order.payment.PaymentStatus;
 import org.delicias.rest.security.SecurityContextService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -60,12 +63,14 @@ public class UserOrdersService {
                         .orderedAt(it.getOrderedAt())
                         .restaurant(Optional.ofNullable(it.getRestaurant()).map(res -> OrderedDTO.Restaurant.builder()
                                         .name(res.getName())
-                                        .pictureUrl(minioStorageService.pictureUrl(res.getImageLogoUrl(), MinioSize.SMALL, MinioRS.FIT, (short) 70))
+                                        .pictureUrl(minioStorageService.pictureUrl(res.getImageLogoUrl(), MinioSize.MEDIUM, MinioRS.FIT, (short) 70))
+                                        .storeType(res.getStoreType())
                                         .build())
                                 .orElse(
                                         OrderedDTO.Restaurant.builder()
                                                 .name("Restaurant Unknow")
-                                                .pictureUrl(minioStorageService.pictureUrl(defaultPicture, MinioSize.SMALL, MinioRS.FIT, (short) 70))
+                                                .pictureUrl(minioStorageService.pictureUrl(defaultPicture, MinioSize.MEDIUM, MinioRS.FIT, (short) 70))
+                                                .storeType(StoreType.RESTAURANT)
                                                 .build()
                                 ))
 
@@ -105,6 +110,8 @@ public class UserOrdersService {
                 .orderId(order.getId())
                 .code(order.getCode())
                 .status(order.getStatus())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPaymentStatus())
                 .totalAmount(order.getTotalAmount())
                 .subtotalAmount(subtotal)
                 .adjustments(order.getAdjustments().stream().map(ad -> OrderedDetailDTO.Adjustment.builder()
@@ -151,6 +158,8 @@ public class UserOrdersService {
                 .orderId(order.getId())
                 .code(order.getCode())
                 .status(order.getStatus())
+                .paymentMethod(PaymentMethod.CASH) // TODO Change when add column
+                .paymentStatus(PaymentStatus.SUCCEEDED) // // TODO Change when add column
                 .totalAmount(order.getTotalAmount())
                 .subtotalAmount(subtotal)
                 .adjustments(order.getAdjustments().stream().map(ad -> OrderedDetailDTO.Adjustment.builder()

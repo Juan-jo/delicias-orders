@@ -1,10 +1,8 @@
 package org.delicias.restaurants.domain.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+import org.delicias.common.dto.restaurant.StoreType;
 import org.locationtech.jts.geom.Point;
 
 @Entity
@@ -30,6 +28,10 @@ public class PosRestaurant {
 
     @Column(name = "position", columnDefinition = "GEOGRAPHY(Point, 4326)")
     private Point position;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "store_type")
+    private StoreType storeType;
 
     public PosRestaurant(Integer id) {
         this.id = id;

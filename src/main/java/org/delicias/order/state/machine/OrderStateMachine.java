@@ -15,6 +15,8 @@ public class OrderStateMachine {
     private final Map<OrderStatus, OrderState> states = new HashMap<>();
 
     public OrderStateMachine() {
+        registerState(new CreatedState());
+        registerState(new PendingPaymentState());
         registerState(new OrderedState());
         registerState(new AcceptedState());
         registerState(new CookingState());

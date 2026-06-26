@@ -2,6 +2,7 @@ package org.delicias.order.dto;
 
 import lombok.Builder;
 import org.delicias.common.dto.order.OrderStatus;
+import org.delicias.common.dto.restaurant.StoreType;
 
 import java.time.Instant;
 
@@ -17,6 +18,7 @@ public record OrderedDTO(
     @Builder
     public record Restaurant(
             String name,
-            String pictureUrl
+            String pictureUrl,
+            StoreType storeType
     ){}
 }
