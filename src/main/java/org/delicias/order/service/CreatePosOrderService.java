@@ -133,15 +133,7 @@ public class CreatePosOrderService {
 
         PaymentStrategy strategy = paymentStrategyFactory.getStrategy(req.paymentMethod());
         PaymentResultDTO paymentResult = strategy.processPayment(order);
-
-
-
-        /*
-        if(paymentResult.method().equals(PaymentMethod.CASH)) {
-            deleteShoppingCart(req.shoppingCartId());
-        }
-        */
-
+        
         return new CreateOrderResponseDTO(
                 paymentResult.method(),
                 paymentResult.clientSecret()

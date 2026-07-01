@@ -14,11 +14,15 @@ import org.delicias.common.dto.order.OrderStatus;
 import org.delicias.order.domain.model.PaymentTransaction;
 import org.delicias.order.domain.model.PosOrder;
 import org.delicias.order.domain.repository.PosOrderRepository;
+import org.delicias.order.payment.PaymentMethod;
 import org.delicias.order.payment.PaymentStatus;
 import org.delicias.order.service.OrderChangeStatusService;
+import org.delicias.rest.clients.NotificationClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.time.Instant;
+import java.util.Map;
 
 @ApplicationScoped
 public class StripeWebhookService {
@@ -111,8 +115,6 @@ public class StripeWebhookService {
             return;
         }
 
-        //order.setPaymentStatus(PaymentStatus.SUCCEEDED);
-        //order.setStatus(OrderStatus.ORDERED);
         changeStatusService.changeStatus(order, OrderStatus.ORDERED);
 
         PaymentTransaction tx = PaymentTransaction.findByTransactionId(paymentIntentId)

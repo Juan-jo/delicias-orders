@@ -19,7 +19,10 @@ import org.delicias.order.state.machine.OrderStateMachine;
 import org.delicias.outbox.domain.OutboxEvent;
 import org.delicias.outbox.domain.OutboxEventType;
 import org.delicias.products.domain.model.PosProduct;
+import org.delicias.rest.clients.NotificationClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -43,6 +46,10 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
 
     @Inject
     ObjectMapper mapper;
+
+    @Inject
+    @RestClient
+    NotificationClient notificationClient;
 
     @Transactional
     @Override
@@ -82,7 +89,6 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 }
 
                 sendStatusChangedOutboxEvent(order);
-                //orderRepository.persist(order);
             }
             case DELIVERED, CANCELLED, REJECTED -> {
                 Integer deliveryUserId = null;
@@ -112,11 +118,14 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
 
         kanbanRepository.persist(kanban);
 
+        sendOrderedOutboxEvent(order, kanban.getId(), restaurantTmplId);
+
         if(order.getPaymentMethod().equals(PaymentMethod.CARD)) {
             order.setPaymentStatus(PaymentStatus.SUCCEEDED);
         }
 
-        sendOrderedOutboxEvent(order, kanban.getId(), restaurantTmplId);
+        sendNotification(order);
+
     }
 
     private void handlePendingPayment(PosOrder order) {
@@ -170,6 +179,44 @@ public class OrderStateFactoryImpl implements OrderStateFactory {
                 .build();
 
         outboxEvent.persist();
+        sendNotification(order);
+
+    }
+
+    private void sendNotification(PosOrder order) {
+        try {
+
+            var metadata = Map.of(
+                    "referenceType", "ORDER",
+                    "referenceId", order.getId(),
+                    "title", order.getRestaurant().getName(),
+                    "pictureUrl", order.getRestaurant().getImageLogoUrl(),
+                    "code", order.getCode()
+            );
+
+            String title = order.getStatus().getTitle();
+            String body = order.getStatus().getDescription();
+
+            if(
+                    order.getStatus().equals(OrderStatus.ORDERED) &&
+                    order.getPaymentMethod().equals(PaymentMethod.CARD)
+            ) {
+                title = "💳 Pago confirmado ✅";
+                body = "💳 Pago confirmado. " + order.getStatus().getDescription();
+            }
+
+            notificationClient.sendNotificacion(
+                    Map.of(
+                            "userUUID", order.getUserUUID(),
+                            "title", title,
+                            "body", body,
+                            "metadata", metadata
+                    )
+            );
+
+        } catch (Exception e) {
+            System.out.println("Error al enviar push notifications ---------> "+e.getMessage());
+        }
     }
 
     @Builder

@@ -53,9 +53,6 @@ public class StripePaymentStrategy implements PaymentStrategy {
                 .updatedAt(Instant.now())
                 .build().persist();
 
-        System.out.println("-------------------- PaymentIntentId -- "+response.paymentIntentId());
-        System.out.println("-------------------- ClientSecret ----- "+response.clientSecret());
-
         return new PaymentResultDTO(
                 CARD,
                 response.clientSecret()

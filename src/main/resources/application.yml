@@ -66,6 +66,8 @@ quarkus:
       url: ${CLIENT_API_RESTAURANTS_URL}
     shoppingcart-service:
       url: ${CLIENT_API_SHOPPINGCART_URL}
+    notifications-service:
+      url: ${CLIENT_API_NOTIFICATIONS_URL}
 
   keycloak:
     admin-client:
